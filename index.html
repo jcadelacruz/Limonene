@@ -14,7 +14,7 @@
     <p style="text-align: center;">
       X: <span id="x_coordinate"> </span>
       Y: <span id="y_coordinate"> </span>
-      Speed: <span id="speed"> </span> %
+      Speed: <span id="speed"> </span>
       Angle: <span id="angle"> </span>
     </p>
     <div id="UI">
@@ -67,7 +67,7 @@
   </style>
 
   <script>
-    var joystick, joystickMovable, INITIALMARGIN = 40, INITIALRADIUS=60;
+    var joystick, joystickMovable, INITIALRADIUS = 60, INITIALMARGIN = 40;
 
     window.addEventListener('load', () => {
       // Disable pinch zoom on the document
@@ -83,14 +83,14 @@
       resize(); 
 
       joystick.addEventListener('mousedown', startJoystick);
-      joystick.addEventListener('mouseup', stopJoystick);
-      joystick.addEventListener('mouseleave', stopJoystick);
-      joystick.addEventListener('mousemove', moveJoystick);
+      window.addEventListener('mouseup', stopJoystick);
+      window.addEventListener('mouseleave', stopJoystick);
+      window.addEventListener('mousemove', moveJoystick);
 
       joystick.addEventListener('touchstart', startJoystick);
       joystick.addEventListener('touchend', stopJoystick);
       //joystick.addEventListener('touchcancel', stopJoystick);
-      joystick.addEventListener('touchmove', moveJoystick);
+      body.addEventListener('touchmove', moveJoystick);
       
       window.addEventListener('resize', resize);
 
@@ -121,7 +121,7 @@
       document.getElementById("body").style.backgroundColor = "orange";
     }
 
-    var radius = INITIALRADIUS, posX = 0, posY = 0;
+    var radius = INITIALRADIUS, posX = 0, posY = 0, spd = 0, angl = 0;
     var joystickClicked = false;
     function resize(){
       var width = window.innerWidth; var height = window.innerHeight;
@@ -156,14 +156,37 @@
       var marginVal = parseInt(window.getComputedStyle(joystick).margin, 10);
       posY = window.innerHeight - posY - radius - marginVal;
       posX -= marginVal + radius;
+      
+      //speed
+      spd = Math.sqrt((posX*posX) + (posY*posY)) / radius;
+      
+      checkIfWithinRadius();
+
+      //finalize spd
+      spd = Math.round(spd*100)/100;
+      //angle
+      angl = Math.atan(posY/posX);
+      angl = (posX<0) ? ((posY<0)?angl+Math.PI:Math.PI+angl) : ((posY<0)?(2*Math.PI)+angl:angl);
+        //convert to degrees if u want
+      angl *= (180)/Math.PI;
     }
 
-    function isItWithinRadius() {
-      console.log("Sdfgs");
-      //console.log(radius + "r, "+posX+"x, "+posY+"y");
-      if ( (posX<radius)&&(posX>(-radius)) && (posY<radius)&&(posY>(-radius)) ) return true
-      else return false
+    /*function checkIfWithinRadius(){
+      posX = (posX > radius) ? radius : ( (posX < -radius) ? -radius : posX);
+      posY = (posY > radius) ? radius : ( (posY < -radius) ? -radius : posY);
+    }*/
+    function checkIfWithinRadius(){
+      if(spd>1){
+        //var multiplier = spd;//!!!
+        posX /= spd; posY /= spd;
+        spd = 1;
+      }
     }
+    /*function isItWithinRadius() {
+      var distance = (posX*posX) + (posY*posY);
+      if ( distance < radius*radius ) return true;
+      else return false;
+    }*/
 
     function startJoystick(event) {
       joystickMovable = document.createElement('div');
@@ -185,11 +208,11 @@
       makeJoystick();
       joystick.style.backgroundColor = "red";
 
-      //resetStats();
+      resetStats();
       displayStats();
     }
     function moveJoystick(event) {
-      if (isItWithinRadius && joystickClicked){
+      if (joystickClicked){
         //update position
         updatePos(event);
         displayStats();
@@ -201,8 +224,8 @@
     function displayStats(){
       x_coordinate.innerText = Math.floor(posX);
       y_coordinate.innerText = Math.floor(posY);
-      document.getElementById("speed").innerText = 0;
-      document.getElementById("angle").innerText = 0;
+      speed.innerText = spd;
+      angle.innerText = Math.floor(angl*100)/100;
     }
     function resetStats(){
       posX = 0; posY = 0; 
