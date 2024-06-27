@@ -5,17 +5,213 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>replit</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
-<body>
-  <div>
-    <h1>Wahooo!!</h1>
-  </div>
-</body>
+  <body style="position: fixed; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: xx-large;
+    color: darkslategray; background-color: lightskyblue;
+    " id="body">
+    <h1 id="hi">MOUSEBOT</h1>
+    <p style="text-align: center;">
+      X: <span id="x_coordinate"> </span>
+      Y: <span id="y_coordinate"> </span>
+      Speed: <span id="speed"> </span> %
+      Angle: <span id="angle"> </span>
+    </p>
+    <div id="UI">
+      <button id="moveBtnA" class="moveBtn UI">A</button>
+      <button id="moveBtnB" class="moveBtn UI">B</button>
+      <div id="joystick" class="UI"></div>
+    </div>
+    </body>
 
-<script src="script.js">
-  var doble = 0;
-</script>
+  <style>
+    /* Disable text selection for the entire page */
+    body {
+        user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+    /* Enable text selection for specific elements if needed */
+    .allow-select {
+        user-select: text;
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        -ms-user-select: text;
+    }
+    h1{
+      text-align:center;
+    }
+    .UI{
+      z-index: 100;
+      position: fixed;
+      opacity: 0.7;
+    }
+    .moveBtn{
+      width: 100px; height: 100px;
+      border-radius: 100%;
+      margin: 10px;
+    }
+    #moveBtnA{ bottom: 0; right: 100px;}
+    #moveBtnB{ bottom: 100px; right: 0;}
+    #joystick{
+      background-color: lightgreen;
+      border-radius: 100%;
+      
+      bottom: 0; left: 0;
+    }
+    #joystick > *{
+      background-color: lightgreen;
+      border-radius: 100%;
+    }
+  </style>
+
+  <script>
+    var joystick, joystickMovable, INITIALMARGIN = 40, INITIALRADIUS=60;
+
+    window.addEventListener('load', () => {
+      // Disable pinch zoom on the document
+      document.addEventListener('touchmove', function(event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+      }, { passive: false });
+
+      
+      joystick = document.getElementById('joystick');
+      //ctx = canvas.getContext('2d');         
+      resize(); 
+
+      joystick.addEventListener('mousedown', startJoystick);
+      joystick.addEventListener('mouseup', stopJoystick);
+      joystick.addEventListener('mouseleave', stopJoystick);
+      joystick.addEventListener('mousemove', moveJoystick);
+
+      joystick.addEventListener('touchstart', startJoystick);
+      joystick.addEventListener('touchend', stopJoystick);
+      //joystick.addEventListener('touchcancel', stopJoystick);
+      joystick.addEventListener('touchmove', moveJoystick);
+      
+      window.addEventListener('resize', resize);
+
+      document.getElementById("x_coordinate").innerText = 0;
+      document.getElementById("y_coordinate").innerText = 0;
+      document.getElementById("speed").innerText = 0;
+      document.getElementById("angle").innerText = 0;
+
+      radius = INITIALRADIUS;
+      makeJoystick();
+      joystick.style.margin = INITIALMARGIN+"px";
+
+      moveBtnA.addEventListener('touchstart', btnAFunction);
+      moveBtnB.addEventListener('touchstart', btnBFunction);
+    });
+
+    function kob(){
+      document.getElementById("body").style.backgroundColor = "purple";
+    }
+    function bok(){
+      document.getElementById("body").style.backgroundColor = "yellow";
+    }
+
+    function btnAFunction(){
+      document.getElementById("body").style.backgroundColor = "blue";
+    }
+    function btnBFunction(){
+      document.getElementById("body").style.backgroundColor = "orange";
+    }
+
+    var radius = INITIALRADIUS, posX = 0, posY = 0;
+    var joystickClicked = false;
+    function resize(){
+      var width = window.innerWidth; var height = window.innerHeight;
+      resizeTo(width, height);
+      //document.getElementById("body").style.backgroundColor = "red";
+    }
+
+    function makeJoystick() {
+      joystick.style.width = radius*2+"px";
+      joystick.style.height = radius*2+"px";
+      joystick.style.backgroundColor = "red";
+    }
+    function makeJoystickMovable() {
+      joystickMovable.style.width = INITIALRADIUS*2+"px";
+      joystickMovable.style.height = INITIALRADIUS*2+"px";
+      joystickMovable.style.backgroundColor = "red";
+      joystickMovable.style.position = "fixed";
+    }
+    function changeRadius(int){
+      joystick.style.margin =  parseInt(window.getComputedStyle(joystick).margin, 10) - (int-radius) + "px";
+      radius = int;
+    }
+
+    function updatePos(e){
+      if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
+        posX = e.touches[0].clientX;
+        posY = e.touches[0].clientY;
+      } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave') {
+        posX = e.clientX;
+        posY = e.clientY;
+      }
+      var marginVal = parseInt(window.getComputedStyle(joystick).margin, 10);
+      posY = window.innerHeight - posY - radius - marginVal;
+      posX -= marginVal + radius;
+    }
+
+    function isItWithinRadius() {
+      console.log("Sdfgs");
+      //console.log(radius + "r, "+posX+"x, "+posY+"y");
+      if ( (posX<radius)&&(posX>(-radius)) && (posY<radius)&&(posY>(-radius)) ) return true
+      else return false
+    }
+
+    function startJoystick(event) {
+      joystickMovable = document.createElement('div');
+      makeJoystickMovable();
+      joystick.appendChild(joystickMovable);
+      
+      joystickClicked = true;
+      changeRadius(85);
+      makeJoystick();
+      joystick.style.backgroundColor = "lightgreen";
+
+      moveJoystick(event);
+    }
+    function stopJoystick() {
+      joystick.innerText = "";
+
+      joystickClicked = false;
+      changeRadius(60);
+      makeJoystick();
+      joystick.style.backgroundColor = "red";
+
+      //resetStats();
+      displayStats();
+    }
+    function moveJoystick(event) {
+      if (isItWithinRadius && joystickClicked){
+        //update position
+        updatePos(event);
+        displayStats();
+
+        //move joystickMovable
+        moveJoystickMovable();
+      }
+    }
+    function displayStats(){
+      x_coordinate.innerText = Math.floor(posX);
+      y_coordinate.innerText = Math.floor(posY);
+      document.getElementById("speed").innerText = 0;
+      document.getElementById("angle").innerText = 0;
+    }
+    function resetStats(){
+      posX = 0; posY = 0; 
+    }
+    function moveJoystickMovable(){
+      var marginVal = parseInt(window.getComputedStyle(joystick).margin, 10);
+      joystickMovable.style.left = marginVal + radius - INITIALRADIUS + posX + "px";
+      joystickMovable.style.bottom = marginVal + radius - INITIALRADIUS + posY + "px";
+    }
+  </script>
 
 </html>
