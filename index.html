@@ -42,7 +42,7 @@
     h1{
       text-align:center;
     }
-    .UI{
+    .UI, #UI>*{
       z-index: 100;
       position: fixed;
       opacity: 0.7;
@@ -68,6 +68,8 @@
 <!---------------------------------------------->
   <script>
   //WINDOW functions
+    var FRAMERATE = 24, timer;
+    const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       // Disable pinch zoom on the document
       document.addEventListener('touchmove', function(event) {
@@ -75,23 +77,89 @@
             event.preventDefault();
         }
       }, { passive: false });
-
+      
       resize(); 
       window.addEventListener('resize', resize);
-
+        //update
+      startTimer();
+        //UI
       initializeJoystickAndFunctions();
-
-      moveBtnA.addEventListener('touchstart', btnAFunction);
-      moveBtnB.addEventListener('touchstart', btnBFunction);
+      initializeMoveButtons();
+      initializeOtherUIButtons();
     });
     function resize(){
       let width = window.innerWidth; let height = window.innerHeight;
       resizeTo(width, height);
     }
+    function startTimer(){ timer = setInterval(update(), 1000/FRAMERATE);}
 
+  //GENERAL functions
+    function update(){
+      
+    }
+
+  //GAME INSTANCES
+      //weapons
+    class Weapon{
+      constructor(d, r, k, pK, s, m, w, rR, bC){
+        this.damage = d; this.range = r; this.knockback = k; this.playerKnockback = pK; this.spread = s; this.magicEffect = m; this.weight = w; this.reloadRate = rR; this.bulletCount = bC;
+        
+      }
+      executeWeaponFunction(){
+        kob();
+        window.setTimeout(function() {bok();}, 500);
+      }
+    }
+
+  //UI BUTTON functions
+    var pauseBtn;
+    function initializeOtherUIButtons(){
+      pauseBtn = document.createElement('button');
+      pauseBtn.id = "pauseBtn";
+      pauseBtn.style = "width: 62px; height: 62px; border-color: black; border-width: 4px; margin: 20px; border-radius: 10%; background-color: lightgreen; position: fixed; top: 0; right: 0; z-index: "+PAUSE_ZINDEX+";";
+      document.getElementById("UI").appendChild(pauseBtn);
+      //functions
+      pauseBtn.addEventListener('touchstart', pause);
+      pauseBtn.addEventListener('mousedown', pause);
+    }
+    function pause(){
+      clearInterval(timer);
+      //make all pause elements inside a new "pausedUI" div (z-index: PAUSE_ZINDEX)
+      //set pause button
+    }
+    function unpause(){
+      startTimer();
+    }
   //MOVE BUTTON functions
+    function initializeMoveButtons(){
+      var moveBtnA = new MoveBtn(document.getElementById('moveBtnA'), "yellow");
+      var moveBtnB = new MoveBtn(document.getElementById('moveBtnB'), "blue");
+      moveBtnA.setWeapon(new Weapon(1,2,3,4,5,6,7,8,9));//test
+      //moveBtnB.setWeapon(new Weapon(1,2,3,4,5,6,7,8,9));//test
+    }
+    class MoveBtn{
+      constructor(buttonElement, color){
+        this.htmlElement = buttonElement;
+        this.htmlElement.addEventListener('touchstart', unequippedWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , unequippedWeaponFunction);
+        this.color = color;
+        this.htmlElement.style.backgroundColor = color;
+
+        this.weapon = null;
+      }
+      setWeapon(weapon){
+        this.weapon = weapon;
+        this.htmlElement.removeEventListener('touchstart', unequippedWeaponFunction);
+        this.htmlElement.removeEventListener('mousedown' , unequippedWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', weapon.executeWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , weapon.executeWeaponFunction);
+      }
+    }
+    function unequippedWeaponFunction(){
+      console.log("button has no equipped weapon");
+    }
     function kob(){
-      document.getElementById("body").style.backgroundColor = "purple";
+      document.getElementById("body").style.backgroundColor = "blue";
     }
     function bok(){
       document.getElementById("body").style.backgroundColor = "yellow";
