@@ -36,6 +36,15 @@
     h1{
       text-align:center;
     }
+    .room{
+      background-color: royalblue;
+      z-index: 1;
+    }
+    .room>*{
+      background-color: darkviolet;
+      z-index: 5;
+      position: absolute;
+    }
     .UI, #UI>*{
       z-index: 100;
       position: fixed;
@@ -69,7 +78,7 @@
 <!---------------------------------------------->
   <script>
   //WINDOW functions
-    var FRAMERATE = 0.5, timer;
+    var FRAMERATE = 24, timer;
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       document.addEventListener('touchmove', function(event) {if (event.touches.length > 1) { event.preventDefault();}}, { passive: false });// Disable pinch zoom on the document
@@ -91,8 +100,8 @@
     }
     function startTimer(){ timer = setInterval(update, 1000/FRAMERATE);}
     //GENERAL functions
+    let dturn = 0;
       function update(){
-        currentRoom.display();
         currentRoom.updatePopulation();
       }
 
@@ -129,10 +138,24 @@
         let l = this.entityPopulation.length;
         for(let i = 0; i < l; i++){
           this.entityPopulation[i].inGame = true;
+          this.entityPopulation[i].initializeDisplay();
         }
       }
-      display(){
-        console.log("in room: "+this.name);
+      initializeDisplay(){
+        if(document.getElementById(this.name)!=null) return;
+        let room = document.createElement('div');
+        room.id = this.name;
+        room.classList.add("room");
+        room.style.width = roomSize + "px";
+        room.style.height = roomSize + "px";
+        room.style.position = "relative";
+        document.getElementById('body').appendChild(room);
+      }
+      enter(){
+        
+      }
+      leave(){
+        
       }
     }
       //ENTITY
@@ -148,8 +171,10 @@
         this.speed = sp;
         this.inGame = false;
         this.x = x; this.y = y;
-        this.moveAngle = null;
+        this.moveAngle = 0;
         this.trackingPlayer = false;
+        //display
+        this.disp = null;
       }
       move(){
         let x = this.x + Math.cos(this.moveAngle) * this.speed;
@@ -183,6 +208,18 @@
       }
       display(){
         console.log("entity: "+this.hp+"/"+this.maxHP+" at ("+this.x+","+this.y+")");
+        this.disp.style.left = this.x + "px";
+        this.disp.style.bottom = this.y + "px";
+      }
+      initializeDisplay(){
+        let en = document.createElement('div');
+        en.classList.add("entity");
+        en.style.width = 20 + "px";
+        en.style.height = 20 + "px";
+        en.style.left = this.x + "px";
+        en.style.bottom = this.y + "px";
+        document.getElementById(currentRoom.name).appendChild(en);
+        this.disp = en;
       }
       attackPlayer(){
         
@@ -204,10 +241,11 @@
       var e01_01 = new Entity(100, 10, 2, 0,0);
       r01.entityPopulation = [e01_01];
       
-      player = new Player(100, 10, 4, 0,0);
+      player = new Player(100, 10, 0, 0,0);
       r00.entityPopulation = [player];
       currentRoom = r00;
-      
+
+      currentRoom.initializeDisplay();
       initializeAllPopulationsInRoomList();
     }
     function initializePlayer(){
@@ -373,9 +411,14 @@
         spd = Math.round(spd*100)/100;
       //angle
       angl = Math.atan(posY/posX);
-      angl = (posX<0) ? ((posY<0)?angl+Math.PI:Math.PI+angl) : ((posY<0)?(2*Math.PI)+angl:angl);
+      if((Math.PI/4)>angl && angl>(-Math.PI/4)){ angl = 0;}
+      else if(angl<0){ angl = -Math.PI/2;}
+        else {angl = Math.PI/2;}
+      
+      angl = (posX<0) ? (Math.PI+angl) : ((posY<0)?(2*Math.PI)+angl:angl);
         //convert to degrees if u want
-      angl *= (180)/Math.PI;
+      //angl *= (180)/Math.PI;
+      translateStats();
     }
     function checkIfWithinRadius(){
       if(spd>1){
@@ -413,6 +456,7 @@
       //reset stats
       resetStats();
       displayStats();
+      translateStats();
     }
     function moveJoystick(event) {
       if (joystickClicked){
@@ -438,6 +482,9 @@
     }
     function resetStats(){
       posX=0; posY=0; spd=0; angl=0;
+    }
+    function translateStats(){
+      player.speed = 4*spd; player.moveAngle = angl;
     }
   </script>
 
