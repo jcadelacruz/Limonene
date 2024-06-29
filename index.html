@@ -47,6 +47,13 @@
       position: fixed;
       opacity: 0.7;
     }
+    #pauseDiv>*{
+      background-color: green;
+      width: 100px;
+      height: 100px;
+      opacity: 0.9;
+      margin: 30px;
+    }
     .moveBtn{
       width: 100px; height: 100px;
       border-radius: 100%;
@@ -112,22 +119,54 @@
     }
 
   //UI BUTTON functions
-    var pauseBtn;
+    var pauseBtn, pauseDiv;
+    var settingsBtn, quitBtn;
     function initializeOtherUIButtons(){
+      //PAUSE BUTTON
       pauseBtn = document.createElement('button');
       pauseBtn.id = "pauseBtn";
       pauseBtn.style = "width: 62px; height: 62px; border-color: black; border-width: 4px; margin: 20px; border-radius: 10%; background-color: lightgreen; position: fixed; top: 0; right: 0; z-index: "+PAUSE_ZINDEX+";";
       document.getElementById("UI").appendChild(pauseBtn);
-      //functions
+        //functions
       pauseBtn.addEventListener('touchstart', pause);
-      pauseBtn.addEventListener('mousedown', pause);
+      pauseBtn.addEventListener('mousedown' , pause);
+      //PAUSED DIV
+      pauseDiv = document.createElement('div'); pauseDiv.id = "pauseDiv";
+      pauseDiv.style = "width: 100%; height: 100%; background-color: black; opacity: 50%; z-index: "+(PAUSE_ZINDEX-1)+"; position: fixed; top: 0; left: 0; display: flex; justify-content: center; align-items: center;";
+      pauseDiv.style.visibility = "hidden";
+      document.getElementById('body').appendChild(pauseDiv);
+        //within div
+      settingsBtn = document.createElement('button'); settingsBtn.id = "settingsBtn";
+      settingsBtn.innerText = "Settings";
+      quitBtn = document.createElement('button'); quitBtn.id = "quitBtn";
+      quitBtn.innerText = "Quit";
+          //adding
+      pauseDiv.appendChild(settingsBtn);
+      pauseDiv.appendChild(quitBtn);
     }
+    
     function pause(){
       clearInterval(timer);
-      //make all pause elements inside a new "pausedUI" div (z-index: PAUSE_ZINDEX)
+      //make all pause elements visible
+      pauseDiv.style.visibility = "visible";
+      //make pauseBtn to unpause
+      pauseBtn.removeEventListener('touchstart', pause);
+      pauseBtn.removeEventListener('mousedown' , pause);
+      pauseBtn.addEventListener('touchstart', unpause);
+      pauseBtn.addEventListener('mousedown' , unpause);
+      
       //set pause button
     }
     function unpause(){
+      //remove all elements visibility
+      pauseDiv.style.visibility = "hidden";
+      //re set pause btn
+      pauseBtn.removeEventListener('touchstart', unpause);
+      pauseBtn.removeEventListener('mousedown' , unpause);
+      pauseBtn.addEventListener('touchstart', pause);
+      pauseBtn.addEventListener('mousedown' , pause);
+
+      //timer start
       startTimer();
     }
   //MOVE BUTTON functions
