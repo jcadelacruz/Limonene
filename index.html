@@ -17,6 +17,7 @@
       Speed: <span id="speed"> </span>
       Angle: <span id="angle"> </span>
     </p>
+    <div id="playArea"></div>
     <div id="UI">
       <button id="moveBtnA" class="moveBtn UI">A</button>
       <button id="moveBtnB" class="moveBtn UI">B</button>
@@ -25,6 +26,7 @@
     </body>
 <!---------------------------------------------->
   <style>
+    html, body{ overscroll-behavior-y: contain;}
     /* Disable text selection for the entire page */
     body {
         user-select: none; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;
@@ -44,6 +46,10 @@
       background-color: darkviolet;
       z-index: 5;
       position: absolute;
+    }
+    #playArea{
+      position: absolute;
+      top: 0; left: 0;
     }
     .UI, #UI>*{
       z-index: 100;
@@ -78,13 +84,15 @@
 <!---------------------------------------------->
   <script>
   //WINDOW functions
-    var FRAMERATE = 24, timer;
+    
+    var FRAMERATE = 24, timer, screenWidth = window.innerWidth, screenHeight = window.innerHeight;
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       document.addEventListener('touchmove', function(event) {if (event.touches.length > 1) { event.preventDefault();}}, { passive: false });// Disable pinch zoom on the document
       
       resize(); 
       window.addEventListener('resize', resize);
+      window.addEventListener('deviceorientation', resize);
         //update
       startTimer();
         //UI
@@ -95,17 +103,55 @@
       initializeInstances();
     });
     function resize(){
-      let width = window.innerWidth; let height = window.innerHeight;
-      resizeTo(width, height);
+      screenWidth = window.innerWidth; screenHeight = window.innerHeight;
+      resizeTo(screenWidth, screenHeight);
     }
     function startTimer(){ timer = setInterval(update, 1000/FRAMERATE);}
     //GENERAL functions
     let dturn = 0;
       function update(){
+        currentRoom.display();
         currentRoom.updatePopulation();
       }
 
   //GAME INSTANCES
+    function initializeInstances(){
+      //weapons
+      //room
+      var r00 = new Room("home", 0,0, roomSize/2,0);
+      var r01 = new Room("cross", 0,1, roomSize/2,0);
+      roomList = [r00, r01];
+      //entities
+      var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5);
+      var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
+      var e01_03 = new Entity(100, 10, 2, 30,2*roomSize/5);
+      var e01_04 = new Entity(100, 10, 2, 40,2*roomSize/5);
+      var e01_11 = new Entity(100, 10, 2, 0,roomSize/5);
+      var e01_12 = new Entity(100, 10, 2, 20,roomSize/5);
+      var e01_13 = new Entity(100, 10, 2, 30,roomSize/5);
+      var e01_14 = new Entity(100, 10, 2, 40,roomSize/5);
+      var e01_21 = new Entity(100, 10, 2, 0,3*roomSize/5);
+      var e01_22 = new Entity(100, 10, 2, 20,3*roomSize/5);
+      var e01_23 = new Entity(100, 10, 2, 30,3*roomSize/5);
+      var e01_24 = new Entity(100, 10, 2, 40,3*roomSize/5);
+      r01.entityPopulation = [];
+        //player
+      player = new Player(100, 10, 0, 0,0);
+      r00.entityPopulation = [e01_02, e01_03]//, e01_04, e01_011, e01_012, e01_013, e01_014, e01_021, e01_022, e01_023, e01_024];
+      r01.entityPopulation = [player, e01_01];
+      currentRoom = r01;
+
+      initializeAllPopulationsInRoomList();
+      currentRoom.enter();
+    }
+    function initializePlayer(){}
+    function initializeAllPopulationsInRoomList(){
+      let l = roomList.length;
+      for(let i=0; i<l; i++){
+        roomList[i].initializePopulation();
+      }
+    }
+
       //WEAPONS
     class Weapon{
       constructor(d, r, k, pK, s, m, w, rR, bC){
@@ -120,17 +166,24 @@
       //ROOM
     var roomList = [];
     var currentRoom;
-    const roomSize = 1000;
+    const roomSize = 500;
     class Room{
       constructor(n, x, y, ex, ey){
         this.name = n;
         this.entityPopulation = null;
         this.exitX = ex; this.exitY = ey;
+        this.x = x; this.y = y;
       }
       updatePopulation(){
         let l = this.entityPopulation.length;
+        let r = currentRoom;
         for(let i = 0; i < l; i++){
+          if(r!==currentRoom) return;
           this.entityPopulation[i].update();
+        }
+        l = this.entityPopulation.length;
+        if(r!==currentRoom) return;
+        for(let i = 0; i < l; i++){
           this.entityPopulation[i].display();
         }
       }
@@ -138,7 +191,6 @@
         let l = this.entityPopulation.length;
         for(let i = 0; i < l; i++){
           this.entityPopulation[i].inGame = true;
-          this.entityPopulation[i].initializeDisplay();
         }
       }
       initializeDisplay(){
@@ -149,18 +201,54 @@
         room.style.width = roomSize + "px";
         room.style.height = roomSize + "px";
         room.style.position = "relative";
-        document.getElementById('body').appendChild(room);
+        document.getElementById('playArea').appendChild(room);
+
+        let l = this.entityPopulation.length;
+        for(let i = 0; i < l; i++){
+          this.entityPopulation[i].initializeDisplay();
+        }
+      }
+      display(){
+        let c = document.getElementById(this.name);
+        c.style.left = (screenWidth/2)-player.x +"px";
+        c.style.top = (screenHeight/2)+player.y-roomSize +"px";
       }
       enter(){
-        
+        currentRoom = this;
+        this.initializeDisplay();
+      }
+      entityTransfersTo(r, e){
+        console.log("transfering to "+r.x+","+r.y);
+        let originalArray = this.entityPopulation, newArray = r.entityPopulation;
+        let indexToRemove = originalArray.indexOf(e);
+
+        if (indexToRemove !== -1) {
+            // Remove the element from the original array and add it to the new array
+            newArray.push(originalArray.splice(indexToRemove, 1)[0]);
+
+            console.log("Original Array:", originalArray);
+            console.log("New Array:", newArray);
+        } else {
+            console.log("Element not found in the original array");
+        }
+
+        //remove display
+        document.getElementById(currentRoom.name).removeChild(e.disp);
       }
       leave(){
-        
+        document.getElementById('playArea').removeChild(document.getElementById(this.name));
       }
+    }
+    function getRoom(x,y){
+      let l = roomList.length;
+      for(let i = 0; i<l; i++){
+        if(roomList[i].x == x && roomList[i].y == y) return roomList[i];
+      }
+      return -1;
     }
       //ENTITY
     var player;
-    const sightRange = 70, sightRangeSquared = sightRange*sightRange, attackRange = 20, attackRangeSquared = attackRange*attackRange;
+    const sightRange = 100, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, entitySize = 50;
     class Entity{
       constructor(h, s, sp, x, y){
         //attack
@@ -172,21 +260,21 @@
         this.inGame = false;
         this.x = x; this.y = y;
         this.moveAngle = 0;
-        this.trackingPlayer = false;
+        this.trackingPlayer = true;
         //display
         this.disp = null;
       }
       move(){
         let x = this.x + Math.cos(this.moveAngle) * this.speed;
         let y = this.y + Math.sin(this.moveAngle) * this.speed;
-        if(x<0||x>roomSize||y<0||y>roomSize) return;
-        this.x = x; this.y = y;
+        if(x>0&&x+entitySize<roomSize) this.x = x;
+        if(y>0&&y+entitySize<roomSize) this.y = y;
       }
       update(turn){
         //pathfinding
         let px = player.x - this.x; let py = player.y - this.y;
         let d = (px*px)+(py*py);
-        if( d<=sightRangeSquared){
+        if( d<=sightRangeSquared){//checking if entity is near the player
           let m = Math.atan(py/px);
           this.moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
           this.trackingPlayer = true;
@@ -195,27 +283,68 @@
             return;//to give player space ig?
           }
         }
-        else{
-          if(trackingPlayer===true){
-            px = currentRoom.exitX - this.x; py = currentRoom.exitY - this.y;
+        else{//case; not near player
+          //if(this.trackingPlayer===true){
+            px = currentRoom.exitX - this.x - entitySize/2; py = currentRoom.exitY - this.y - entitySize/2;
             let m = Math.atan(py/px);
             this.moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
             this.trackingPlayer = false;
-          }
+          //}
+          //check if near exit of room
+          if(this.contains(currentRoom.exitX, currentRoom.exitY)){ this.transferRooms();}
         }
         //movement
         this.move();
       }
+      findRoomAtDirection(){
+        let dir = (currentRoom.exitX!==roomSize/2) ? ((currentRoom.exitX===0)? "left" : "right") : ((currentRoom.exitY===0)? "down" : "up" );
+        let r = currentRoom;
+        switch(dir){
+          case "left":
+            r = getRoom(currentRoom.x-1, currentRoom.y);
+            if(r===-1)break;
+            console.log("going left");
+            this.x = roomSize-entitySize-1; this.y = roomSize/2;
+            break;
+          case "right":
+            r = getRoom(currentRoom.x+1, currentRoom.y);
+            if(r===-1)break;
+            console.log("going right");
+            this.x = 1; this.y = roomSize/2;
+            break;
+          case "down":
+            r = getRoom(currentRoom.x, currentRoom.y-1);
+            if(r===-1)break;
+            console.log("going down: "+currentRoom.x+","+currentRoom.y);
+            this.x = roomSize/2; this.y = roomSize-entitySize-1;
+            break;
+          case "up":
+            r = getRoom(currentRoom.x, currentRoom.y+1);
+            if(r===-1)break;
+console.log("going up");
+            this.x = roomSize/2; this.y = 1;
+            break;
+        }
+        return r;
+      }
+      transferRooms(){
+        let r = this.findRoomAtDirection();
+            if(r!==-1)currentRoom.entityTransfersTo(r, this);
+      }
+      contains(x, y){
+        let m = 8;//margin of error
+        if( (this.x-m<x && x<this.x+m+entitySize) && (this.y-m<y && y<this.y+m+entitySize) ) return true;
+      }
       display(){
-        console.log("entity: "+this.hp+"/"+this.maxHP+" at ("+this.x+","+this.y+")");
+       // console.log("entity: "+this.hp+"/"+this.maxHP+" at ("+this.x+","+this.y+")");
         this.disp.style.left = this.x + "px";
         this.disp.style.bottom = this.y + "px";
       }
       initializeDisplay(){
         let en = document.createElement('div');
         en.classList.add("entity");
-        en.style.width = 20 + "px";
-        en.style.height = 20 + "px";
+        en.style.width = entitySize + "px";
+        en.style.height = entitySize + "px";
         en.style.left = this.x + "px";
         en.style.bottom = this.y + "px";
         document.getElementById(currentRoom.name).appendChild(en);
@@ -227,36 +356,32 @@
     }
     class Player extends Entity{
       update(){
+        //check if near exit of room
+        if(this.contains(currentRoom.exitX, currentRoom.exitY)){ this.transferRooms();}
+        //move
         this.move();
       }
-    }
-
-    function initializeInstances(){
-      //weapons
-      //room
-      var r00 = new Room("home", 0,0, 0,0);
-      var r01 = new Room("cross", 0,1, 500,1000);
-      roomList = [r00, r01];
-      //entities
-      var e01_01 = new Entity(100, 10, 2, 0,0);
-      r01.entityPopulation = [e01_01];
-      
-      player = new Player(100, 10, 0, 0,0);
-      r00.entityPopulation = [player];
-      currentRoom = r00;
-
-      currentRoom.initializeDisplay();
-      initializeAllPopulationsInRoomList();
-    }
-    function initializePlayer(){
-    }
-    function initializeAllPopulationsInRoomList(){
-      let l = roomList.length;
-      for(let i=0; i<l; i++){
-        roomList[i].initializePopulation();
+      transferRooms(){
+        let r = this.findRoomAtDirection();
+        if(r!==-1){
+          currentRoom.entityTransfersTo(r, this);
+          currentRoom.leave();
+          r.enter();
+        }
+      }
+      initializeDisplay(){
+        let en = document.createElement('div');
+        en.classList.add("entity");
+        en.style.width = entitySize + "px";
+        en.style.height = entitySize + "px";
+        en.style.left = this.x + "px";
+        en.style.bottom = this.y + "px";
+        en.style.backgroundColor = "red";
+        document.getElementById(currentRoom.name).appendChild(en);
+        this.disp = en;
       }
     }
-    
+
   //UI BUTTON functions
     var pauseBtn, pauseDiv;
     var settingsBtn, quitBtn;
@@ -292,8 +417,10 @@
       //make pauseBtn to unpause
       pauseBtn.removeEventListener('touchstart', pause);
       pauseBtn.removeEventListener('mousedown' , pause);
-      pauseBtn.addEventListener('touchstart', unpause);
-      pauseBtn.addEventListener('mousedown' , unpause);
+      setTimeout(() => {
+        pauseBtn.addEventListener('touchstart', unpause);
+        pauseBtn.addEventListener('mousedown' , unpause);
+      }, 1000);
     }
     function unpause(){
       //remove all elements visibility
@@ -301,8 +428,10 @@
       //re set pause btn
       pauseBtn.removeEventListener('touchstart', unpause);
       pauseBtn.removeEventListener('mousedown' , unpause);
-      pauseBtn.addEventListener('touchstart', pause);
+      setTimeout(() => {
+        pauseBtn.addEventListener('touchstart', pause);
       pauseBtn.addEventListener('mousedown' , pause);
+      }, 1000);
       //timer start
       startTimer();
     }
@@ -411,9 +540,9 @@
         spd = Math.round(spd*100)/100;
       //angle
       angl = Math.atan(posY/posX);
-      if((Math.PI/4)>angl && angl>(-Math.PI/4)){ angl = 0;}
+      /*if((Math.PI/4)>angl && angl>(-Math.PI/4)){ angl = 0;}
       else if(angl<0){ angl = -Math.PI/2;}
-        else {angl = Math.PI/2;}
+        else {angl = Math.PI/2;}*///use 4 cardinal directions
       
       angl = (posX<0) ? (Math.PI+angl) : ((posY<0)?(2*Math.PI)+angl:angl);
         //convert to degrees if u want
