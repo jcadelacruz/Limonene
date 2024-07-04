@@ -4,18 +4,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>replit</title>
+  <title>Limonene_replit</title>
 </head>
 
-  <body style="position: fixed; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; font-size: xx-large;
-    color: darkslategray; background-color: lightskyblue;
+  <body style="position: fixed; font-family: 'Lucida Console', 'Courier New','Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; text-align: left; font-weight: bolder;
+    color: darkslategray; background-color: lightslategray;
     " id="body">
-    <h1 id="hi">MOUSEBOT</h1>
-    <p style="text-align: center;">
-      X: <span id="x_coordinate"> </span>
-      Y: <span id="y_coordinate"> </span>
-      Speed: <span id="speed"> </span>
-      Angle: <span id="angle"> </span>
+    <p style="font-size: 20px; white-space: pre;">
+X:<span id="x_coordinate"></span><span id="e1"></span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sem et tortor consequat id porta nibh venenatis. Etiam dignissim diam quis enim. Pellentesque id nibh tortor id. Quis imperdiet massa tincidunt nunc pulvinar sapien et. Nunc faucibus a pellentesque sit amet porttitor.
+Y:<span id="y_coordinate"></span><span id="e2"></span>Quis viverra nibh cras pulvinar mattis nunc sed blandit. Velit scelerisque in dictum non consectetur a erat nam. Nibh cras pulvinar mattis nunc sed blandit libero volutpat sed. Nisl pretium fusce id velit ut. Orci ac auctor augue mauris. Dui vivamus arcu felis bibendum ut tristique et. Elit ullamcorper dignissim cras tincidunt lobortis feugiat.
+Speed:<span id="speed"></span><span id="e3"></span>Viverra aliquet eget sit amet tellus cras adipiscing enim. Volutpat sed cras ornare arcu. Fringilla ut morbi tincidunt augue interdum. Pulvinar etiam non quam lacus suspendisse faucibus. Quisque egestas diam in arcu. Sed nisi lacus sed viverra tellus.
+Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus. Et malesuada fames ac turpis egestas maecenas. Vitae suscipit tellus mauris a diam maecenas sed. Magna eget est lorem ipsum dolor sit amet consectetur adipiscing.
     </p>
     <div id="playArea"></div>
     <div id="UI">
@@ -89,10 +88,11 @@
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       document.addEventListener('touchmove', function(event) {if (event.touches.length > 1) { event.preventDefault();}}, { passive: false });// Disable pinch zoom on the document
-      
+        //display stuff
       resize(); 
       window.addEventListener('resize', resize);
       window.addEventListener('deviceorientation', resize);
+      displayStats();
         //update
       startTimer();
         //UI
@@ -604,10 +604,15 @@ console.log("going up");
     }
     //display functions
     function displayStats(){
+      let uno = "Ek ", dos = "Wi ", tre = "Spe ", qua = "Ang ";
       x_coordinate.innerText = Math.floor(posX);
       y_coordinate.innerText = Math.floor(posY);
       speed.innerText = spd;
       angle.innerText = Math.floor(angl*100)/100;
+      e1.innerText=" "+uno.substring(x_coordinate.innerText.length,4);
+      e2.innerText=" "+dos.substring(y_coordinate.innerText.length,4);
+      e3.innerText=" "+tre.substring(speed.innerText.length,5);
+      e4.innerText=" "+qua.substring(angle.innerText.length,5);
     }
     function resetStats(){
       posX=0; posY=0; spd=0; angl=0;
