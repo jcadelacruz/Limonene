@@ -41,7 +41,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       background-color: royalblue;
       z-index: 1;
     }
-    .room>*{
+    .room>div{
       background-color: darkviolet;
       z-index: 5;
       position: absolute;
@@ -120,7 +120,10 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       //room
       var r00 = new Room("home", 0,0, roomSize/2,0);
       var r01 = new Room("cross", 0,1, roomSize/2,0);
-      roomList = [r00, r01];
+      var r11 = new Room("kitchen", 1,1, 0,roomSize/2);
+      var rn11 = new Room("badlands", -1,1, roomSize,roomSize/2);
+      var r02 = new Room("heaven", 0,2, roomSize/2,0);
+      roomList = [r00, r01, r11, rn11, r02];
       //entities
       var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5);
       var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
@@ -170,7 +173,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     class Room{
       constructor(n, x, y, ex, ey){
         this.name = n;
-        this.entityPopulation = null;
+        this.entityPopulation = [];
         this.exitX = ex; this.exitY = ey;
         this.x = x; this.y = y;
       }
@@ -201,6 +204,9 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         room.style.width = roomSize + "px";
         room.style.height = roomSize + "px";
         room.style.position = "relative";
+        let p =document.createElement('p');
+        p.innerText = this.name;
+        room.appendChild(p);
         document.getElementById('playArea').appendChild(room);
 
         let l = this.entityPopulation.length;
@@ -267,8 +273,12 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       move(){
         let x = this.x + Math.cos(this.moveAngle) * this.speed;
         let y = this.y + Math.sin(this.moveAngle) * this.speed;
-        if(x>0&&x+entitySize<roomSize) this.x = x;
-        if(y>0&&y+entitySize<roomSize) this.y = y;
+        if(x<=0) this.x = 0;
+        else if(x+entitySize>=roomSize) this.x = roomSize-entitySize;
+        else this.x = x;
+        if(y<=0) this.y = 0;
+        else if(y+entitySize>=roomSize) this.y = roomSize-entitySize;
+        else this.y = y;
       }
       update(turn){
         //pathfinding
@@ -357,17 +367,40 @@ console.log("going up");
     class Player extends Entity{
       update(){
         //check if near exit of room
-        if(this.contains(currentRoom.exitX, currentRoom.exitY)){ this.transferRooms();}
+        let gap = 5;
+        if(this.contains(0,roomSize/2)){
+          if(this.transferRoomsTo(-1,0)===1)//left
+          {this.x = roomSize-entitySize-gap; this.y = roomSize/2;}
+        }
+        else if(this.contains(roomSize,roomSize/2)){
+          if(this.transferRoomsTo(1,0)===1)//right
+          {this.x = gap; this.y = roomSize/2;}
+        }
+        else if(this.contains(roomSize/2,0)){
+          if(this.transferRoomsTo(0,-1)===1)//down
+          {this.x = roomSize/2; this.y = roomSize-entitySize-gap;}
+        }
+        else if(this.contains(roomSize/2,roomSize)){
+          if(this.transferRoomsTo(0,1)===1)//up
+          {this.x = roomSize/2; this.y = gap;}
+        }
         //move
         this.move();
       }
-      transferRooms(){
-        let r = this.findRoomAtDirection();
+      transferRoomsTo(xAdd, yAdd){
+        let r = getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
+        //let r = this.findRoomAtDirection();
         if(r!==-1){
           currentRoom.entityTransfersTo(r, this);
           currentRoom.leave();
           r.enter();
+          return 1;
         }
+        else return -1;
+      }
+      contains(x, y){
+        let m = 2;//margin of error
+        if( (this.x-m<x && x<this.x+m+entitySize) && (this.y-m<y && y<this.y+m+entitySize) ) return true;
       }
       initializeDisplay(){
         let en = document.createElement('div');
