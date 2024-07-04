@@ -181,13 +181,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         let l = this.entityPopulation.length;
         let r = currentRoom;
         for(let i = 0; i < l; i++){
-          if(r!==currentRoom) return;
-          this.entityPopulation[i].update();
-        }
-        l = this.entityPopulation.length;
-        if(r!==currentRoom) return;
-        for(let i = 0; i < l; i++){
-          this.entityPopulation[i].display();
+          try{
+            this.entityPopulation[i].update();
+            this.entityPopulation[i].display();
+          }
+          catch(err){}
         }
       }
       initializePopulation(){
