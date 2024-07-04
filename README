@@ -1,0 +1,62 @@
+GAME: Limonene
+DEADLINE: anniv or bday
+
+  3 game modes i can think of rn:
+
+UI for first two: flat 2d world, kinda like pokemon but inspired by soul knight (no gravity, essentially top down view)
+
+Game modes:
+  1. Pieces mode (wait out the timer)
+
+Joystick to move around, 2 weapon buttons that u can press
+Weapons have a cooldown, indicated by the outline of the button (or opacity or smn idfk)
+All weapons are unique, in damage, range, knockback, player knockback, spread, magic effect, weight (?), reload rate, amt of bullets, etc
+You can shoot both weapons one after the other
+
+User has
+Integer amt of health and damage
+speed will be treated separately, most likely double
+As for regen, im not sure yet, might js copy soul knight and have two health bars, one that regens (armor), one that doesnt (hp)
+
+Soul knight style random generation of rooms (?)
+Rooms could be different sizes, but they will all be handmade, just put through a randomizer so its more fun
+Rooms branch out from the center (your base) and gradually reveal themselves as waves are completed
+There are 3 - 5 waves (might have boss fight at the end?)
+Pieces will be dropped by the enemies or by random chests
+Enemy pathfinding goes towards your base, but also if youre too close theyll go for you
+Youll be alerted if theyre get too close to your base, and youre faster than them so you can usually catch up
+But their strength is in numbers and u have to level up and upgrade yourself or your weapons (upgrades can be 20mtd style or js straight up buy what u can with whatever currency or level system i use)
+Additional feature im not sure of adding yet: ability to build baracades or build in general
+> Kind of turns the game into a more interesting tower defense
+
+After the game ends, win or loss, you keep your pieces. You can slot them in 10 at a time or smn into the gacha machine, and you will get a random photo of us two or smn ganun 
+Also replay the game and get a higher level so higher score woo
+ 
+  2. Letter mode (inspired by slenderman board game by basco non stop)
+21x33 grid daw idk
+No time limit, the goal is to get all the letters before slenderman (or whoever) gets you and kills you
+There would be 20 letters to get, maybe most are red herrings not sure yet, but once you have the set of real ones you win somehow
+There are houses which u can enter via door
+You can walk around freely
+Slender can only move a set amount of tiles per turn, but always goes towards you, and hes faster than you
+After some time limit (which shortens as more pages are obtained) slender moves to a random position 
+If slender catches you, you die (unless theres a shield or life system or smn) but still the more you get caught the worse your experience is
+Slender cant see through walls or doors, and cant enter houses (cant teleport in either) so theyre safe spaces but u gotta move eventually
+Not sure if ill add sound design cuz idk how to make a game spooky
+Also might add random items like flashlight that helps your sight (since its dark) or the shields or extra lives yes
+Maybe if u get caught with an extra life u get teleported somewhere random and your screen gets glitchy idk
+
+After the game is done you can read the letters i wrote to you (if you found them)
+Might make some letters rarer or put in places hard to get so its more difficult and incentive to play more
+Oh also keep replaying to get a higher score (less deaths and faster time)
+
+
+UI for third: platformer type
+  3. Puzzle platformer
+where you shoot stuff so you have better mobility
+Guns can boost and push you around
+Or maybe they have abilities like grappling hook, magnet thingy, paintbrush from stick fight style build shit
+Anw the point is to get to the checkpoint or whatever
+Maybe its like a puzzle game and the locations are significant places in our rs ykyk
+
+If you complete it maybe gravity will be removed and u can js fly through the scenes
