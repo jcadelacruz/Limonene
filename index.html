@@ -156,14 +156,80 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     }
 
       //WEAPONS
-    class Weapon{
-      constructor(d, r, k, pK, s, m, w, rR, bC){
-        this.damage = d; this.range = r; this.knockback = k; this.playerKnockback = pK; this.spread = s; this.magicEffect = m; this.weight = w; this.reloadRate = rR; this.bulletCount = bC;
+    class Bullet{
+      constructor(w, s, sz, dir, x,y){
+        this.weapon = w;
+        this.speed = s; this.size = sz; this.direction = dir;
+        this.x = x; this.y = y;
         
+        let d = document.createElement('div');
+          d.classList.add("bullet");
+          d.style.width = sz+"px";d.style.height = sz+"px";
+          d.style.backgroundColor = "white";
+          d.style.borderRadius = "65%";
+          d.style.rotate = dir+"rad";
+        document.getElementById(currentRoom.name).appendChild(d);
+        this.disp = d;
       }
-      executeWeaponFunction(){//TEST CONTENT
-        kob();
-        window.setTimeout(function() {bok();}, 500);
+      update(){
+        this.move();
+        this.executeEffect(this.collides());
+        this.display();
+      }
+      move(){
+        let x = this.x + Math.cos(this.direction) * this.speed;
+        let y = this.y + Math.sin(this.direction) * this.speed;
+        let s = this.size;
+        if(x<=0) this.x = 0;
+        else if(x+s>=roomSize) this.x = roomSize-s;
+        else this.x = x;
+        if(y<=0) this.y = 0;
+        else if(y+s>=roomSize) this.y = roomSize-s;
+        else this.y = y;
+      }
+      collides(){//pseudocode
+        let col = false;
+        let entity = "";
+        if(1<2) return entity; 
+        return col;
+      }
+      executeEffect(e){//pseudocode
+        if(e===-1) return;
+      }
+      display(){
+        this.disp.style.left = this.x + "px";
+        this.disp.style.bottom = this.y + "px";
+      }
+    }
+    class Weapon{
+      constructor(bS,r,bSz,s,   bC,rR, a,   d, m,   k,   pK,w){
+        this.bulletSpeed = bS; this.range = r; this.bulletSize = bSz, this.spread = s;//bullet movement identity
+        this.bulletCount = bC; this.reloadRate = rR; this.ammo = a;//bullet use identity
+        this.damage = d; this.magicEffect = m;//victim non-pos effect
+        this.knockback = k;//victim pos effect
+        this.playerKnockback = pK; this.weight = w;//shooter effects (active vs passive)
+
+        this.bullets = [];
+      }
+      executeWeaponFunction(e){
+        let aimDir = e.moveAngle;
+        for(let i = 0; i < this.bulletCount; i++){
+          let es2 = entitySize/2;
+          let b = new Bullet(this, this.bulletSpeed, this.bulletSize, aimDir, e.x+(es2), e.y+(es2));
+          this.bullets.push(b);
+          aimDir += this.spread;
+        }
+      }
+      unequip(){
+        for(let i = 0; i < this.bullets.length; i++){
+          this.bullets[i].disp.remove();
+        }
+        bullets = [];
+      }
+      update(){
+        for(let i = 0; i < this.bullets.length; i++){
+          this.bullets[i].update();
+        }
       }
     }
       //ROOM
@@ -337,7 +403,7 @@ console.log("going up");
       }
       transferRooms(){
         let r = this.findRoomAtDirection();
-            if(r!==-1)currentRoom.entityTransfersTo(r, this);
+        if(r!==-1)currentRoom.entityTransfersTo(r, this);
       }
       contains(x, y){
         let m = 8;//margin of error
@@ -384,6 +450,8 @@ console.log("going up");
         }
         //move
         this.move();
+        //weapons
+        updateEquippedWeapons();
       }
       transferRoomsTo(xAdd, yAdd){
         let r = getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
@@ -433,6 +501,9 @@ console.log("going up");
         //within div
       settingsBtn = document.createElement('button'); settingsBtn.id = "settingsBtn";
       settingsBtn.innerText = "Settings";
+      settingsBtn.addEventListener('click', function () {console.log('settings');
+        moveBtnA.setWeapon(new Weapon(20,100,5,0.2,   1,10,1,   1,null,   20,   10,0.08));//test
+})
       quitBtn = document.createElement('button'); quitBtn.id = "quitBtn";
       quitBtn.innerText = "Quit";
           //functions
@@ -467,10 +538,10 @@ console.log("going up");
       startTimer();
     }
   //MOVE BUTTON functions
+    var moveBtnA, moveBtnB;
     function initializeMoveButtons(){
-      var moveBtnA = new MoveBtn(document.getElementById('moveBtnA'), "yellow");
-      var moveBtnB = new MoveBtn(document.getElementById('moveBtnB'), "blue");
-      moveBtnA.setWeapon(new Weapon(1,2,3,4,5,6,7,8,9));//test
+      moveBtnA = new MoveBtn(document.getElementById('moveBtnA'), "yellow");
+      moveBtnB = new MoveBtn(document.getElementById('moveBtnB'), "blue");
       //moveBtnB.setWeapon(new Weapon(1,2,3,4,5,6,7,8,9));//test
     }
     class MoveBtn{
@@ -484,11 +555,30 @@ console.log("going up");
         this.weapon = null;
       }
       setWeapon(weapon){
+        if(this.weapon!==null){
+          this.weapon.unequip();
+          this.htmlElement.removeEventListener('touchstart', executeWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , executeWeaponFunction);
+        }
+        else{
+          this.htmlElement.removeEventListener('touchstart', unequippedWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , unequippedWeaponFunction);
+        }
         this.weapon = weapon;
-        this.htmlElement.removeEventListener('touchstart', unequippedWeaponFunction);
-        this.htmlElement.removeEventListener('mousedown' , unequippedWeaponFunction);
-        this.htmlElement.addEventListener('touchstart', weapon.executeWeaponFunction);
-        this.htmlElement.addEventListener('mousedown' , weapon.executeWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', executeWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , executeWeaponFunction);
+      }
+    }
+    function executeWeaponFunction(event){
+      const source = event.target || event.srcElement;
+      let moveBtn = moveBtnB;
+      if(source===moveBtnA.htmlElement) moveBtn = moveBtnA;
+      moveBtn.weapon.executeWeaponFunction(player);
+    }
+    function updateEquippedWeapons(){
+      let weapons = [moveBtnA.weapon, moveBtnB.weapon];
+      for(let i = 0; i<weapons.length; i++){
+        if(weapons[i]!==null) weapons[i].update();
       }
     }
     function unequippedWeaponFunction(){
@@ -646,7 +736,7 @@ console.log("going up");
       e4.innerText=" "+qua.substring(angle.innerText.length,5);
     }
     function resetStats(){
-      posX=0; posY=0; spd=0; angl=0;
+      posX=0; posY=0; spd=0;
     }
     function translateStats(){
       player.speed = 4*spd; player.moveAngle = angl;
