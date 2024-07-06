@@ -44,18 +44,6 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       position: fixed;
       opacity: 0.7;
     }
-    #moveBtnA{ bottom: 0; right: 100px;}
-    #moveBtnB{ bottom: 100px; right: 0;}
-    #joystick{
-      background-color: lightgreen;
-      border-radius: 100%;
-      
-      bottom: 0; left: 0;
-    }
-    #joystick > *{
-      background-color: lightgreen;
-      border-radius: 100%;
-    }
   </style>
 <!---------------------------------------------->
   <script>
@@ -584,12 +572,12 @@ console.log("going up");
   //MOVE BUTTON functions
     var moveBtnA, moveBtnB;
     function initializeMoveButtons(){
-      moveBtnA = new MoveBtn(document.getElementById('moveBtnA'), "yellow");
-      moveBtnB = new MoveBtn(document.getElementById('moveBtnB'), "blue");
+      moveBtnA = new MoveBtn(document.getElementById('moveBtnA'), "yellow", 0,100);
+      moveBtnB = new MoveBtn(document.getElementById('moveBtnB'), "blue", 100,0);
       //moveBtnB.setWeapon(new Weapon(1,2,3,4,5,6,7,8,9));//test
     }
     class MoveBtn{
-      constructor(buttonElement, color){
+      constructor(buttonElement, color, b,r){
         //binds
         this.myExecuteWeaponFunction = this.executeWeaponFunction.bind(this);
         this.myUnequippedWeaponFunction = this.unequippedWeaponFunction.bind(this);
@@ -598,12 +586,8 @@ console.log("going up");
         this.htmlElement.addEventListener('touchstart', this.myUnequippedWeaponFunction);
         this.htmlElement.addEventListener('mousedown' , this.myUnequippedWeaponFunction);
         this.color = color;
-        this.htmlElement.style.backgroundColor = color;
         let size = 100;
-        this.htmlElement.style.width = size+'px';
-        this.htmlElement.style.height = size+'px';
-        this.htmlElement.style.borderRadius = "100%";
-        this.htmlElement.style.margin = '10px';
+        this.htmlElement.style = "background-color: "+color+"; width: "+size+"px; height: "+size+"px; border-radius: 100%; margin: 10px; bottom: "+b+"px; right: "+r+"px;";
 
         this.weapon = null;
       }
@@ -670,9 +654,8 @@ console.log("going up");
         this.myStopJoystick = this.stopJoystick.bind(this);
         //htmlElement
         let h = document.createElement('div'); h.id = 'joystick';
+        h.style = "background-color: red; margin: "+INITIALMARGIN+"px; border-radius: 100%; bottom: 0; left: 0;";
         h.style.width = this.radius*2+"px"; h.style.height = this.radius*2+"px";
-        h.style.backgroundColor = "red";
-        h.style.margin = INITIALMARGIN+"px";
           //mouse controls
         h.addEventListener('mousedown', this.myStartJoystick);
         window.addEventListener('mouseup', this.myStopJoystick);
@@ -706,6 +689,7 @@ console.log("going up");
         this.joystickMovable.style.height = INITIALRADIUS*2+"px";
         this.joystickMovable.style.backgroundColor = "red";
         this.joystickMovable.style.position = "fixed";
+        this.joystickMovable.style.borderRadius = "100%";
       }
       changeRadius(int){
         this.htmlElement.style.margin = parseInt(window.getComputedStyle(this.htmlElement).margin, 10) - (int-this.radius) + "px";
