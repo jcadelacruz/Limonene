@@ -35,45 +35,14 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     .allow-select {
         user-select: text; -moz-user-select: text; -webkit-user-select: text; -ms-user-select: text;
     }
-    h1{
-      text-align:center;
-    }
-    .room{
-      background-color: royalblue;
-      z-index: 1;
-    }
-    .room>div{
-      background-color: darkviolet;
-      z-index: 5;
-      position: absolute;
-    }
     #playArea{
       position: absolute;
       top: 0; left: 0;
-    }
-    .pausedDivs{
-      width: 100%; 
-      height: 100%; 
-      opacity: 50%; 
-      position: fixed; top: 0; left: 0; 
-      display: flex; justify-content: center; align-items: center; 
     }
     .UI, #UI>*{
       z-index: 100;
       position: fixed;
       opacity: 0.7;
-    }
-    #pauseDiv>*{
-      background-color: green;
-      width: 100px;
-      height: 100px;
-      opacity: 0.9;
-      margin: 30px;
-    }
-    .moveBtn{
-      width: 100px; height: 100px;
-      border-radius: 100%;
-      margin: 10px;
     }
     #moveBtnA{ bottom: 0; right: 100px;}
     #moveBtnB{ bottom: 100px; right: 0;}
@@ -93,7 +62,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
   //WINDOW functions
     
     var FRAMERATE = 24, timer, screenWidth = window.innerWidth, screenHeight = window.innerHeight;
-    const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
+    const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ROOM_ZINDEX = 2; ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       document.addEventListener('touchmove', function(event) {if (event.touches.length > 1) { event.preventDefault();}}, { passive: false });// Disable pinch zoom on the document
         //display stuff
@@ -115,8 +84,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     }
     function startTimer(){ timer = setInterval(update, 1000/FRAMERATE);}
     //GENERAL functions
-    let dturn = 0;
-      function update(){
+    function update(){
         currentRoom.display();
         currentRoom.updatePopulation();
       }
@@ -274,7 +242,9 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         room.style.width = roomSize + "px";
         room.style.height = roomSize + "px";
         room.style.position = "relative";
-        let p =document.createElement('p');
+        room.style.backgroundColor = "royalblue";
+        room.style.zIndex = ROOM_ZINDEX;
+        let p = document.createElement('p');
         p.innerText = this.name;
         room.appendChild(p);
         document.getElementById('playArea').appendChild(room);
@@ -423,10 +393,11 @@ console.log("going up");
       initializeDisplay(){
         let en = document.createElement('div');
         en.classList.add("entity");
-        en.style.width = entitySize + "px";
-        en.style.height = entitySize + "px";
-        en.style.left = this.x + "px";
-        en.style.bottom = this.y + "px";
+        en.style.width = entitySize + "px"; en.style.height = entitySize + "px";
+        en.style.left = this.x + "px"; en.style.bottom = this.y + "px";
+        en.style.backgroundColor = "darkviolet";//TEMP BACKGROUND COLOR
+        en.style.zIndex= ENTITY_ZINDEX;
+        en.style.position= "absolute";
         document.getElementById(currentRoom.name).appendChild(en);
         this.disp = en;
       }
@@ -481,7 +452,9 @@ console.log("going up");
         en.style.height = entitySize + "px";
         en.style.left = this.x + "px";
         en.style.bottom = this.y + "px";
-        en.style.backgroundColor = "red";
+        en.style.backgroundColor = "red";//TEMP BACKGROUND COLOR
+        en.style.zIndex = ENTITY_ZINDEX;
+        en.style.position = "absolute";
         document.getElementById(currentRoom.name).appendChild(en);
         this.disp = en;
       }
@@ -493,106 +466,120 @@ console.log("going up");
       }
     }
 
-  //UI BUTTON functions
-    var pauseBtn, pauseDiv;
-    var inventoryBtn, settingsBtn, quitBtn;
-    var inventoryDiv, settingsDiv, quitDiv;
+  //PAUSE BUTTON functions
+    var pauseBtn, pauseDiv = document.createElement('div');
+    var paused = false;
+    const uiTBSize = 100;
     function initializePauseBtn(){
-      //PAUSE BUTTON
-      pauseBtn = document.createElement('button');
-      pauseBtn.id = "pauseBtn";
-      pauseBtn.style = "width: 62px; height: 62px; border-color: black; border-width: 4px; margin: 20px; border-radius: 10%; background-color: lightgreen; position: fixed; top: 0; right: 0; z-index: "+PAUSE_ZINDEX+";";
-      document.getElementById("UI").appendChild(pauseBtn);
-        //functions
-      pauseBtn.addEventListener('touchstart', pause);
-      pauseBtn.addEventListener('mousedown' , pause);
-      //PAUSED DIV
-      pauseDiv = document.createElement('div'); pauseDiv.id = "pauseDiv";
-      pauseDiv.style = "background-color: black; z-index: "+(PAUSE_ZINDEX-1)+";";
-      pauseDiv.style.visibility = "hidden";
-      pauseDiv.classList.add('pausedDivs');
-      document.getElementById('body').appendChild(pauseDiv);
-        //within div
-      initializePauseContents();
+      pauseBtn = new PauseBtn(pauseDiv);
+      inventoryBtn = new UITransportBtn("inventory","yellow", document.createElement('div'), "palegoldenrod");
+      settingsBtn = new UITransportBtn("settings","lightgreen", document.createElement('div'), "green");
+      storeBtn = new UITransportBtn("store","gray", document.createElement('div'), "slategray");
+      quitBtn = new UITransportBtn("quit","palevioletred", document.createElement('div'), "pink");
     }
-    function initializePauseContents(){
-        //buttons
-      inventoryBtn = document.createElement('button'); inventoryBtn.id = "inventoryBtn";
-      inventoryBtn.innerText = "Inventory";
-      inventoryDiv = document.getElementById('inventoryDiv');
-      inventoryDiv.style = "background-color: black; z-index: "+(PAUSE_ZINDEX-1)+";";
-      inventoryDiv.style.visibility = "hidden";
-
-      settingsBtn = document.createElement('button'); settingsBtn.id = "settingsBtn";
-      settingsBtn.innerText = "Settings";
-      settingsDiv = document.getElementById('settingsDiv');
-
-      quitBtn = document.createElement('button'); quitBtn.id = "quitBtn";
-      quitBtn.innerText = "Quit";
-      quitDiv = document.getElementById('quitDiv');
-        //adding
-      pauseDiv.appendChild(inventoryBtn);
-      pauseDiv.appendChild(settingsBtn);
-      pauseDiv.appendChild(quitBtn);
-    }
-      //INVENTORY
-    function openInventory(){
-      console.log("inventory");
-      pauseDiv.style.visibility = "hidden";
-      inventoryDiv.style.visibility = "visible";
-    }
-    function closeInventory(){
-      
-    }
-      //SETTINGS
-    function openSettings(){
-      console.log("settings");
-    }
-      //QUIT
-    function quitGame(){
-      console.log("quit");
-    }
-
-      //PAUSE
-    function replacePauseBtnFunction(d){
-      pauseBtn.removeEventListener('touchstart', unpause);
-      pauseBtn.removeEventListener('mousedown' , unpause);
-      if(d===inventoryDiv){
-        pauseBtn.addEventListener('click', closeInventory);
-      }else if(d===settingsDiv){
-        pauseBtn.addEventListener('click', closeSettings);
-      }else if(d===quitDiv){
-        pauseBtn.addEventListener('click', closeQuit);
+    class UITransportBtn{
+      constructor(n,c,  d,dc){
+        this.name = n;
+        //function binding
+        this.myOpenDiv = this.openDiv.bind(this);
+        this.myCloseDiv = this.closeDiv.bind(this);
+        //div element
+        d.style = "width: 100%; height: 100%; opacity: 95%; position: fixed; top: 0; left: 0; visibility: hidden; background-color: "+dc+"; z-index: "+(PAUSE_ZINDEX-1)+";";
+          //appending
+        this.divElement = d;
+        document.getElementById('body').appendChild(d);
+        //htmlElement button
+        let h = document.createElement('button');
+        h.style = "background-color: "+c+"; width: "+uiTBSize+"px; height: "+uiTBSize+"px; opacity: 90%; margin: 30px; z-index: "+(PAUSE_ZINDEX-1)+"; display: flex; justify-content: center; align-items: center;font-family: inherit;";
+        let l = document.createElement('p'); l.innerText = this.name;
+        l.style = "color: black; font-family: inherit; font-weight: bolder";
+        h.appendChild(l);
+          //function
+        h.addEventListener('click', this.myOpenDiv);
+          //appending
+        this.htmlElement = h;
+        pauseBtn.divElement.appendChild(this.htmlElement)
       }
-      
+      openDiv(){
+        pauseBtn.divElement.style.visibility = "hidden";
+        pauseBtn.htmlElement.innerText = "back";
+        this.divElement.style.visibility = 'visible';
+        pauseBtn.replaceFunction(this);
+      }
+      closeDiv(){
+        this.divElement.style.visibility = 'hidden';
+        pauseBtn.divElement.style.visibility = 'visible';
+      }
     }
-    function pause(){
-      clearInterval(timer);
-      //make all pause elements visible
-      pauseDiv.style.visibility = "visible";
-      //make pauseBtn to unpause
-      pauseBtn.removeEventListener('touchstart', pause);
-      pauseBtn.removeEventListener('mousedown' , pause);
-      setTimeout(() => {
-        pauseBtn.addEventListener('touchstart', unpause);
-        pauseBtn.addEventListener('mousedown' , unpause);
-        inventoryBtn.addEventListener('click', openInventory);
-        settingsBtn.addEventListener('click', openSettings);
-        quitBtn.addEventListener('click', quitGame);
-      }, 1000);
-    }
-    function unpause(){
-      //remove all elements visibility
-      pauseDiv.style.visibility = "hidden";
-      //re set pause btn
-      pauseBtn.removeEventListener('touchstart', unpause);
-      pauseBtn.removeEventListener('mousedown' , unpause);
-      setTimeout(() => {
-        pauseBtn.addEventListener('touchstart', pause);
-        pauseBtn.addEventListener('mousedown' , pause);
-      }, 1000);
-      //timer start
-      startTimer();
+    class PauseBtn{
+      constructor(d){//assume that pauseDiv is already created
+        pauseBtn = this;
+        //function binding
+        this.myPauseFunction = this.pauseFunction.bind(this);
+        this.specialPauseFunction = this.joystickPauseFunction.bind(this);
+        this.myCloseOpenedUIBtn = this.closeOpenedUIBtn.bind(this);
+        //make htmlElement
+        this.name = "pause";
+        let h = document.createElement('button'); h.id = "pauseBtn";
+        let size = 62;
+        h.style = "width: "+size+"px; height: "+size+"px; border-color: black; border-width: 4px; margin: 20px; border-radius: 10%; background-color: lightgreen; position: fixed; top: 0; right: 0; z-index: "+PAUSE_ZINDEX+";";
+          //functions
+        h.addEventListener('click', this.myPauseFunction);
+        //h.addEventListener('mousedown' , this.myPauseFunction);
+        this.openedUIBtn = null;
+        
+        this.htmlElement = h;
+        document.getElementById('UI').appendChild(this.htmlElement);
+        //div element
+        d = document.createElement('div'); d.id = "pauseDiv";
+        d.style = "width: 100%; height: 100%; opacity: 50%; position: fixed; top: 0; left: 0; display: flex; justify-content: center; align-items: center; background-color: black; z-index: "+(PAUSE_ZINDEX-1)+";";
+        d.style.visibility = "hidden";
+        document.getElementById('body').appendChild(d);
+        this.divElement = d;
+      }
+      pauseFunction(){
+        if(!paused){
+          clearInterval(timer);
+          //make all pause elements visible
+          this.divElement.style.visibility = "visible";
+          //make pauseBtn to pauseFunction
+          paused = true;
+
+          //joystick shenanigans
+          try{pauseBtn.htmlElement.removeEventListener('touchstart', pauseBtn.specialPauseFunction);}
+          catch(err){}
+        }
+        else{
+          //remove all elements visibility
+          this.divElement.style.visibility = "hidden";
+          //re set pause btn
+          paused = false;
+          //timer start
+          startTimer();
+        }
+      }
+      joystickPauseFunction(){
+        this.pauseFunction();
+        joystick.stopJoystick();
+        try{pauseBtn.htmlElement.removeEventListener('touchstart', pauseBtn.specialPauseFunction);}
+        catch(err){}
+      }
+      replaceFunction(uitb){
+        this.openedUIBtn = uitb;
+        this.htmlElement.removeEventListener('click', this.myPauseFunction);
+        setTimeout(() => {
+          if(this.openedUIBtn!==null)this.htmlElement.addEventListener('click', this.myCloseOpenedUIBtn);
+        }, 10);
+      }
+      closeOpenedUIBtn(){
+        this.openedUIBtn.closeDiv();
+        this.openedUIBtn = null;
+        this.htmlElement.innerText = "";
+        this.htmlElement.removeEventListener('click', this.myCloseOpenedUIBtn);
+        setTimeout(() => {
+          if(this.openedUIBtn===null)this.htmlElement.addEventListener('click', this.myPauseFunction);
+        }, 10);
+      }
     }
   //MOVE BUTTON functions
     var moveBtnA, moveBtnB;
@@ -603,28 +590,44 @@ console.log("going up");
     }
     class MoveBtn{
       constructor(buttonElement, color){
+        //binds
+        this.myExecuteWeaponFunction = this.executeWeaponFunction.bind(this);
+        this.myUnequippedWeaponFunction = this.unequippedWeaponFunction.bind(this);
+        //htmlElement
         this.htmlElement = buttonElement;
-        this.htmlElement.addEventListener('touchstart', this.unequippedWeaponFunction);
-        this.htmlElement.addEventListener('mousedown' , this.unequippedWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', this.myUnequippedWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , this.myUnequippedWeaponFunction);
         this.color = color;
         this.htmlElement.style.backgroundColor = color;
+        let size = 100;
+        this.htmlElement.style.width = size+'px';
+        this.htmlElement.style.height = size+'px';
+        this.htmlElement.style.borderRadius = "100%";
+        this.htmlElement.style.margin = '10px';
 
         this.weapon = null;
-        this.executeWeaponFunction = this.executeWeaponFunction.bind(this);
       }
       setWeapon(weapon){
         if(this.weapon!==null){
           this.weapon.unequip();
-          this.htmlElement.removeEventListener('touchstart', this.executeWeaponFunction);
-          this.htmlElement.removeEventListener('mousedown' , this.executeWeaponFunction);
+          this.htmlElement.removeEventListener('touchstart', this.myExecuteWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , this.myExecuteWeaponFunction);
         }
         else{
-          this.htmlElement.removeEventListener('touchstart', this.unequippedWeaponFunction);
-          this.htmlElement.removeEventListener('mousedown' , this.unequippedWeaponFunction);
+          this.htmlElement.removeEventListener('touchstart', this.myUnequippedWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , this.myUnequippedWeaponFunction);
         }
         this.weapon = weapon;
-        this.htmlElement.addEventListener('touchstart', this.executeWeaponFunction);
-        this.htmlElement.addEventListener('mousedown' , this.executeWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', this.myExecuteWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , this.myExecuteWeaponFunction);
+      }
+      unequipWeapon(){
+        this.weapon.unequip();
+        this.htmlElement.removeEventListener('touchstart', this.myExecuteWeaponFunction);
+        this.htmlElement.removeEventListener('mousedown' , this.myExecuteWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', this.myUnequippedWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , this.myUnequippedWeaponFunction);
+        this.weapon = null;
       }
       unequippedWeaponFunction(){
         console.log("button has no equipped weapon");
@@ -648,6 +651,7 @@ console.log("going up");
     }*/
 
   //JOYSTICK functions
+    var joystick;
     const INITIALRADIUS = 60, INITIALMARGIN = 40;
     function initializeJoystickAndFunctions(){
       //making joystick + css
@@ -656,7 +660,6 @@ console.log("going up");
     }
     class Joystick{
       constructor(){
-        //joystick = this;
         //values
         this.radius = INITIALRADIUS;
         this.posX = 0; this.posY = 0;
@@ -755,6 +758,9 @@ console.log("going up");
         this.htmlElement.style.backgroundColor = "lightgreen";
         //update
         this.moveJoystick(event);
+        
+        //pause button shenanigans
+        pauseBtn.htmlElement.addEventListener('touchstart', pauseBtn.specialPauseFunction);
       }
       stopJoystick() {
         //delete movable part of joystick in html
@@ -768,6 +774,10 @@ console.log("going up");
         this.resetStats();
         this.displayStats();
         this.translateStats();
+
+        //pause button shenanigans
+        try{pauseBtn.htmlElement.removeEventListener('touchstart', pauseBtn.specialPauseFunction);}
+        catch(err){}
       }
       moveJoystick(event) {
         if (this.joystickClicked){
