@@ -1,0 +1,27 @@
+NOTE: all time is in ticks (where standard 24 ticks per second)
+BULLET MOVEMENT
+  bulletSpeed(in px per time),
+  range(in px),
+  bulletSize, 
+  spread(angle between consecutive bullets in a shot, in radians)
+BULLET USE
+  bulletCount(number of bullets shot per shot),
+  reloadDuration(time it takes to be able to reload one shot),
+  magSize(number of shots per fully reload mag)
+VICTIM EFFECTS
+  damage(duh),
+  magicEffect(lasting effect on the enemy)
+  ^(not counting lasting effects on surroundings, not sure if i wanna do that yet),
+  knockback(in px)
+SHOOTER EFFECTS
+  shooterKnockback(in px),
+  weight(percentage effect on shooter's speed) NOTE: executed upon un/equip (passive)
+
+    Name         constructor(bS,r  ,bSz,s   ,   bC,rR,mS,   d,m   ,k ,   sK,w   )
+var standardGun = new Weapon(20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08);
+var sword
+var shotgun
+var sniper
+var grenade
+var waterHose
+var 

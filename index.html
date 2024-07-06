@@ -20,7 +20,8 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     <div id="UI">
       <button id="moveBtnA" class="moveBtn UI">A</button>
       <button id="moveBtnB" class="moveBtn UI">B</button>
-      <div id="joystick" class="UI"></div>
+      <div id="inventoryDiv" class="UI" style="visibility: hidden;">
+      </div>
     </div>
     </body>
 <!---------------------------------------------->
@@ -49,6 +50,13 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     #playArea{
       position: absolute;
       top: 0; left: 0;
+    }
+    .pausedDivs{
+      width: 100%; 
+      height: 100%; 
+      opacity: 50%; 
+      position: fixed; top: 0; left: 0; 
+      display: flex; justify-content: center; align-items: center; 
     }
     .UI, #UI>*{
       z-index: 100;
@@ -92,13 +100,12 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       resize(); 
       window.addEventListener('resize', resize);
       window.addEventListener('deviceorientation', resize);
-      displayStats();
         //update
       startTimer();
         //UI
       initializeJoystickAndFunctions();
       initializeMoveButtons();
-      initializeOtherUIButtons();
+      initializePauseBtn();
         //game instances
       initializeInstances();
     });
@@ -202,12 +209,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
     }
     class Weapon{
-      constructor(bS,r,bSz,s,   bC,rR, a,   d, m,   k,   pK,w){
+      constructor(bS,r,bSz,s,   bC,rD,mS,   d, m,   k,   sK,w){
         this.bulletSpeed = bS; this.range = r; this.bulletSize = bSz, this.spread = s;//bullet movement identity
-        this.bulletCount = bC; this.reloadRate = rR; this.ammo = a;//bullet use identity
-        this.damage = d; this.magicEffect = m;//victim non-pos effect
-        this.knockback = k;//victim pos effect
-        this.playerKnockback = pK; this.weight = w;//shooter effects (active vs passive)
+        this.bulletCount = bC; this.reloadDuration = rD; this.magSize = mS;//bullet use identity
+        this.damage = d; this.magicEffect = m; this.knockback = k;//victim effects
+        this.shooterKnockback = sK; this.weight = w;//shooter effects (active vs passive)
 
         this.bullets = [];
       }
@@ -318,7 +324,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     }
       //ENTITY
     var player;
-    const sightRange = 100, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, entitySize = 50;
+    const sightRange = 150, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, entitySize = 50;
     class Entity{
       constructor(h, s, sp, x, y){
         //attack
@@ -451,7 +457,7 @@ console.log("going up");
         //move
         this.move();
         //weapons
-        updateEquippedWeapons();
+        this.updateEquippedWeapons();
       }
       transferRoomsTo(xAdd, yAdd){
         let r = getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
@@ -479,12 +485,19 @@ console.log("going up");
         document.getElementById(currentRoom.name).appendChild(en);
         this.disp = en;
       }
+      updateEquippedWeapons(){
+        let weapons = [moveBtnA.weapon, moveBtnB.weapon];
+        for(let i = 0; i<weapons.length; i++){
+          if(weapons[i]!==null) weapons[i].update();
+        }
+      }
     }
 
   //UI BUTTON functions
     var pauseBtn, pauseDiv;
-    var settingsBtn, quitBtn;
-    function initializeOtherUIButtons(){
+    var inventoryBtn, settingsBtn, quitBtn;
+    var inventoryDiv, settingsDiv, quitDiv;
+    function initializePauseBtn(){
       //PAUSE BUTTON
       pauseBtn = document.createElement('button');
       pauseBtn.id = "pauseBtn";
@@ -495,23 +508,64 @@ console.log("going up");
       pauseBtn.addEventListener('mousedown' , pause);
       //PAUSED DIV
       pauseDiv = document.createElement('div'); pauseDiv.id = "pauseDiv";
-      pauseDiv.style = "width: 100%; height: 100%; background-color: black; opacity: 50%; z-index: "+(PAUSE_ZINDEX-1)+"; position: fixed; top: 0; left: 0; display: flex; justify-content: center; align-items: center;";
+      pauseDiv.style = "background-color: black; z-index: "+(PAUSE_ZINDEX-1)+";";
       pauseDiv.style.visibility = "hidden";
+      pauseDiv.classList.add('pausedDivs');
       document.getElementById('body').appendChild(pauseDiv);
         //within div
+      initializePauseContents();
+    }
+    function initializePauseContents(){
+        //buttons
+      inventoryBtn = document.createElement('button'); inventoryBtn.id = "inventoryBtn";
+      inventoryBtn.innerText = "Inventory";
+      inventoryDiv = document.getElementById('inventoryDiv');
+      inventoryDiv.style = "background-color: black; z-index: "+(PAUSE_ZINDEX-1)+";";
+      inventoryDiv.style.visibility = "hidden";
+
       settingsBtn = document.createElement('button'); settingsBtn.id = "settingsBtn";
       settingsBtn.innerText = "Settings";
-      settingsBtn.addEventListener('click', function () {console.log('settings');
-        moveBtnA.setWeapon(new Weapon(20,100,5,0.2,   1,10,1,   1,null,   20,   10,0.08));//test
-})
+      settingsDiv = document.getElementById('settingsDiv');
+
       quitBtn = document.createElement('button'); quitBtn.id = "quitBtn";
       quitBtn.innerText = "Quit";
-          //functions
-          //adding
+      quitDiv = document.getElementById('quitDiv');
+        //adding
+      pauseDiv.appendChild(inventoryBtn);
       pauseDiv.appendChild(settingsBtn);
       pauseDiv.appendChild(quitBtn);
     }
-    
+      //INVENTORY
+    function openInventory(){
+      console.log("inventory");
+      pauseDiv.style.visibility = "hidden";
+      inventoryDiv.style.visibility = "visible";
+    }
+    function closeInventory(){
+      
+    }
+      //SETTINGS
+    function openSettings(){
+      console.log("settings");
+    }
+      //QUIT
+    function quitGame(){
+      console.log("quit");
+    }
+
+      //PAUSE
+    function replacePauseBtnFunction(d){
+      pauseBtn.removeEventListener('touchstart', unpause);
+      pauseBtn.removeEventListener('mousedown' , unpause);
+      if(d===inventoryDiv){
+        pauseBtn.addEventListener('click', closeInventory);
+      }else if(d===settingsDiv){
+        pauseBtn.addEventListener('click', closeSettings);
+      }else if(d===quitDiv){
+        pauseBtn.addEventListener('click', closeQuit);
+      }
+      
+    }
     function pause(){
       clearInterval(timer);
       //make all pause elements visible
@@ -522,6 +576,9 @@ console.log("going up");
       setTimeout(() => {
         pauseBtn.addEventListener('touchstart', unpause);
         pauseBtn.addEventListener('mousedown' , unpause);
+        inventoryBtn.addEventListener('click', openInventory);
+        settingsBtn.addEventListener('click', openSettings);
+        quitBtn.addEventListener('click', quitGame);
       }, 1000);
     }
     function unpause(){
@@ -532,7 +589,7 @@ console.log("going up");
       pauseBtn.removeEventListener('mousedown' , unpause);
       setTimeout(() => {
         pauseBtn.addEventListener('touchstart', pause);
-      pauseBtn.addEventListener('mousedown' , pause);
+        pauseBtn.addEventListener('mousedown' , pause);
       }, 1000);
       //timer start
       startTimer();
@@ -547,44 +604,36 @@ console.log("going up");
     class MoveBtn{
       constructor(buttonElement, color){
         this.htmlElement = buttonElement;
-        this.htmlElement.addEventListener('touchstart', unequippedWeaponFunction);
-        this.htmlElement.addEventListener('mousedown' , unequippedWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', this.unequippedWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , this.unequippedWeaponFunction);
         this.color = color;
         this.htmlElement.style.backgroundColor = color;
 
         this.weapon = null;
+        this.executeWeaponFunction = this.executeWeaponFunction.bind(this);
       }
       setWeapon(weapon){
         if(this.weapon!==null){
           this.weapon.unequip();
-          this.htmlElement.removeEventListener('touchstart', executeWeaponFunction);
-          this.htmlElement.removeEventListener('mousedown' , executeWeaponFunction);
+          this.htmlElement.removeEventListener('touchstart', this.executeWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , this.executeWeaponFunction);
         }
         else{
-          this.htmlElement.removeEventListener('touchstart', unequippedWeaponFunction);
-          this.htmlElement.removeEventListener('mousedown' , unequippedWeaponFunction);
+          this.htmlElement.removeEventListener('touchstart', this.unequippedWeaponFunction);
+          this.htmlElement.removeEventListener('mousedown' , this.unequippedWeaponFunction);
         }
         this.weapon = weapon;
-        this.htmlElement.addEventListener('touchstart', executeWeaponFunction);
-        this.htmlElement.addEventListener('mousedown' , executeWeaponFunction);
+        this.htmlElement.addEventListener('touchstart', this.executeWeaponFunction);
+        this.htmlElement.addEventListener('mousedown' , this.executeWeaponFunction);
+      }
+      unequippedWeaponFunction(){
+        console.log("button has no equipped weapon");
+      }
+      executeWeaponFunction(){
+        this.weapon.executeWeaponFunction(player);
       }
     }
-    function executeWeaponFunction(event){
-      const source = event.target || event.srcElement;
-      let moveBtn = moveBtnB;
-      if(source===moveBtnA.htmlElement) moveBtn = moveBtnA;
-      moveBtn.weapon.executeWeaponFunction(player);
-    }
-    function updateEquippedWeapons(){
-      let weapons = [moveBtnA.weapon, moveBtnB.weapon];
-      for(let i = 0; i<weapons.length; i++){
-        if(weapons[i]!==null) weapons[i].update();
-      }
-    }
-    function unequippedWeaponFunction(){
-      console.log("button has no equipped weapon");
-    }
-    function kob(){
+    /*function kob(){
       document.getElementById("body").style.backgroundColor = "blue";
     }
     function bok(){
@@ -596,150 +645,167 @@ console.log("going up");
     }
     function btnBFunction(){
       document.getElementById("body").style.backgroundColor = "orange";
-    }
+    }*/
 
   //JOYSTICK functions
-    var joystick = document.getElementById('joystick'), joystickMovable;
     const INITIALRADIUS = 60, INITIALMARGIN = 40;
-    var radius = INITIALRADIUS, posX = 0, posY = 0, spd = 0, angl = 0;
-    var joystickClicked = false;
-
     function initializeJoystickAndFunctions(){
       //making joystick + css
-      makeJoystick();
-      joystick.style.margin = INITIALMARGIN+"px";
-      
-      //mouse controls
-      joystick.addEventListener('mousedown', startJoystick);
-      window.addEventListener('mouseup', stopJoystick);
-      window.addEventListener('mouseleave', stopJoystick);
-      window.addEventListener('mousemove', moveJoystick);
-      //touch controls
-      joystick.addEventListener('touchstart', startJoystick);
-      joystick.addEventListener('touchend', stopJoystick);
-      //joystick.addEventListener('touchcancel', stopJoystick);
-      body.addEventListener('touchmove', moveJoystick);
-      //TEST display buttons
-      document.getElementById("x_coordinate").innerText = 0;
-      document.getElementById("y_coordinate").innerText = 0;
-      document.getElementById("speed").innerText = 0;
-      document.getElementById("angle").innerText = 0;
+      joystick = new Joystick();
+      joystick.displayStats();
     }
-      //computing css changes
-    function makeJoystick() {
-      joystick.style.width = radius*2+"px";
-      joystick.style.height = radius*2+"px";
-      joystick.style.backgroundColor = "red";
-    }
-    function makeJoystickMovable() {
-      joystickMovable.style.width = INITIALRADIUS*2+"px";
-      joystickMovable.style.height = INITIALRADIUS*2+"px";
-      joystickMovable.style.backgroundColor = "red";
-      joystickMovable.style.position = "fixed";
-    }
-    function changeRadius(int){
-      joystick.style.margin =  parseInt(window.getComputedStyle(joystick).margin, 10) - (int-radius) + "px";
-      radius = int;
-    }
-      //computing changes to variables
-    function updatePos(e){
-      //pos
-      if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
-        posX = e.touches[0].clientX;
-        posY = e.touches[0].clientY;
-      } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave') {
-        posX = e.clientX;
-        posY = e.clientY;
+    class Joystick{
+      constructor(){
+        //joystick = this;
+        //values
+        this.radius = INITIALRADIUS;
+        this.posX = 0; this.posY = 0;
+        this.spd = 0; this.angl = 0;
+        //binding functions
+        this.myMoveJoystick = this.moveJoystick.bind(this);
+        this.myStartJoystick = this.startJoystick.bind(this);
+        this.myStopJoystick = this.stopJoystick.bind(this);
+        //htmlElement
+        let h = document.createElement('div'); h.id = 'joystick';
+        h.style.width = this.radius*2+"px"; h.style.height = this.radius*2+"px";
+        h.style.backgroundColor = "red";
+        h.style.margin = INITIALMARGIN+"px";
+          //mouse controls
+        h.addEventListener('mousedown', this.myStartJoystick);
+        window.addEventListener('mouseup', this.myStopJoystick);
+        window.addEventListener('mouseleave', this.stopJoystick);
+        window.addEventListener('mousemove', this.myMoveJoystick);
+          //touch controls
+        h.addEventListener('touchstart', this.myStartJoystick);
+        h.addEventListener('touchend', this.myStopJoystick);
+          //joystick.addEventListener('touchcancel', myStopJoystick);
+        document.getElementById('body').addEventListener('touchmove', this.myMoveJoystick);
+          //TEST display buttons
+        document.getElementById("x_coordinate").innerText = 0;
+        document.getElementById("y_coordinate").innerText = 0;
+        document.getElementById("speed").innerText = 0;
+        document.getElementById("angle").innerText = 0;
+          //append
+        this.htmlElement = h;
+        document.getElementById('UI').appendChild(this.htmlElement);
+        this.joystickClicked = false;
+        //joystickMovable
+        this.joystickMovable = document.createElement('div');
       }
-      var marginVal = parseInt(window.getComputedStyle(joystick).margin, 10);
-      posY = window.innerHeight - posY - radius - marginVal;
-      posX -= marginVal + radius;
-      //speed
-      spd = Math.sqrt((posX*posX) + (posY*posY)) / radius;
-      checkIfWithinRadius();
-        //finalize spd
-        spd = Math.round(spd*100)/100;
-      //angle
-      angl = Math.atan(posY/posX);
-      /*if((Math.PI/4)>angl && angl>(-Math.PI/4)){ angl = 0;}
-      else if(angl<0){ angl = -Math.PI/2;}
-        else {angl = Math.PI/2;}*///use 4 cardinal directions
-      
-      angl = (posX<0) ? (Math.PI+angl) : ((posY<0)?(2*Math.PI)+angl:angl);
-        //convert to degrees if u want
-      //angl *= (180)/Math.PI;
-      translateStats();
-    }
-    function checkIfWithinRadius(){
-      if(spd>1){
-        posX /= spd; posY /= spd;
-        spd = 1;
+        //computing css changes
+      makeJoystick(){
+        this.htmlElement.style.width = this.radius*2+"px";
+        this.htmlElement.style.height = this.radius*2+"px";
+        this.htmlElement.style.backgroundColor = "red";
       }
-    }
-    /*function isItWithinRadius() {
-      var distance = (posX*posX) + (posY*posY);
-      if ( distance < radius*radius ) return true;
-      else return false;
-    }*/
-    //event functions
-    function startJoystick(event) {
-      //make movable part of joystick in html
-      joystickMovable = document.createElement('div');
-      makeJoystickMovable();
-      joystick.appendChild(joystickMovable);
-      //start the joystick
-      joystickClicked = true;
-      changeRadius(85);
-      makeJoystick();
-      joystick.style.backgroundColor = "lightgreen";
-      //update
-      moveJoystick(event);
-    }
-    function stopJoystick() {
-      //delete movable part of joystick in html
-      joystick.innerText = "";
-      //stop the joystick
-      joystickClicked = false;
-      changeRadius(60);
-      makeJoystick();
-      joystick.style.backgroundColor = "red";
-      //reset stats
-      resetStats();
-      displayStats();
-      translateStats();
-    }
-    function moveJoystick(event) {
-      if (joystickClicked){
-        //update position
-        updatePos(event);
-        displayStats();
-        //move joystickMovable
-        moveJoystickMovable();
+      makeJoystickMovable() {
+        this.joystickMovable.style.width = INITIALRADIUS*2+"px";
+        this.joystickMovable.style.height = INITIALRADIUS*2+"px";
+        this.joystickMovable.style.backgroundColor = "red";
+        this.joystickMovable.style.position = "fixed";
       }
-    }
-    //moving joystick movable
-    function moveJoystickMovable(){
-      var marginVal = parseInt(window.getComputedStyle(joystick).margin, 10);
-      joystickMovable.style.left = marginVal + radius - INITIALRADIUS + posX + "px";
-      joystickMovable.style.bottom = marginVal + radius - INITIALRADIUS + posY + "px";
-    }
-    //display functions
-    function displayStats(){
-      let uno = "Ek ", dos = "Wi ", tre = "Spe ", qua = "Ang ";
-      x_coordinate.innerText = Math.floor(posX);
-      y_coordinate.innerText = Math.floor(posY);
-      speed.innerText = spd;
-      angle.innerText = Math.floor(angl*100)/100;
-      e1.innerText=" "+uno.substring(x_coordinate.innerText.length,4);
-      e2.innerText=" "+dos.substring(y_coordinate.innerText.length,4);
-      e3.innerText=" "+tre.substring(speed.innerText.length,5);
-      e4.innerText=" "+qua.substring(angle.innerText.length,5);
-    }
-    function resetStats(){
-      posX=0; posY=0; spd=0;
-    }
-    function translateStats(){
-      player.speed = 4*spd; player.moveAngle = angl;
+      changeRadius(int){
+        this.htmlElement.style.margin = parseInt(window.getComputedStyle(this.htmlElement).margin, 10) - (int-this.radius) + "px";
+        this.radius = int;
+      }
+        //computing changes to variables
+      updatePos(e){
+        //pos
+        if(e.type == 'touchstart' || e.type == 'touchmove' || e.type == 'touchend' || e.type == 'touchcancel'){
+          this.posX = e.touches[0].clientX;
+          this.posY = e.touches[0].clientY;
+        } else if (e.type == 'mousedown' || e.type == 'mouseup' || e.type == 'mousemove' || e.type == 'mouseover'|| e.type=='mouseout' || e.type=='mouseenter' || e.type=='mouseleave') {
+          this.posX = e.clientX;
+          this.posY = e.clientY;
+        }
+        let marginVal = parseInt(window.getComputedStyle(this.htmlElement).margin, 10);
+        this.posY = window.innerHeight - this.posY - this.radius - marginVal;
+        this.posX -= marginVal + this.radius;
+        //speed
+        this.spd = Math.sqrt((this.posX*this.posX) + (this.posY*this.posY)) / this.radius;
+        this.checkIfWithinRadius();
+          //finalize spd
+          this.spd = Math.round(this.spd*100)/100;
+        //angle
+        this.angl = Math.atan(this.posY/this.posX);
+        /*if((Math.PI/4)>this.angl && this.angl>(-Math.PI/4)){this.angl = 0;}
+        else if(this.angl<0){ this.angl = -Math.PI/2;}
+          else {this.angl = Math.PI/2;}*///use 4 cardinal directions
+
+        this.angl = (this.posX<0) ? (Math.PI+this.angl) : ((this.posY<0)?(2*Math.PI)+this.angl:this.angl);
+          //convert to degrees if u want
+        //this.angl *= (180)/Math.PI;
+        this.translateStats();
+      }
+      checkIfWithinRadius(){
+        if(this.spd>1){
+          this.posX /= this.spd; this.posY /= this.spd;
+          this.spd = 1;
+        }
+      }
+        //event functions
+      startJoystick(event) {
+        //make movable part of joystick in html
+        this.makeJoystickMovable();
+        this.htmlElement.appendChild(this.joystickMovable);
+        //start the joystick
+        this.joystickClicked = true;
+          this.changeRadius(85);
+        this.makeJoystick();
+        this.htmlElement.style.backgroundColor = "lightgreen";
+        //update
+        this.moveJoystick(event);
+      }
+      stopJoystick() {
+        //delete movable part of joystick in html
+        this.htmlElement.innerText = "";
+        //stop the joystick
+        this.joystickClicked = false;
+        this.changeRadius(60);
+        this.makeJoystick();
+        this.htmlElement.style.backgroundColor = "red";
+        //reset stats
+        this.resetStats();
+        this.displayStats();
+        this.translateStats();
+      }
+      moveJoystick(event) {
+        if (this.joystickClicked){
+          //update position
+          this.updatePos(event);
+          this.displayStats();
+          //move joystickMovable
+          this.moveJoystickMovable();
+        }
+      }
+        //moving joystick movable
+      moveJoystickMovable(){
+        var marginVal = parseInt(window.getComputedStyle(this.htmlElement).margin, 10);
+        this.joystickMovable.style.left = marginVal + this.radius - INITIALRADIUS + this.posX + "px";
+        this.joystickMovable.style.bottom = marginVal + this.radius - INITIALRADIUS + this.posY + "px";
+      }
+        //display functions
+      displayStats(){
+        let uno = "Ek ", dos = "Wi ", tre = "Spe ", qua = "Ang ";
+        let x = document.getElementById('x_coordinate');
+        let y = document.getElementById('y_coordinate');
+        let s = document.getElementById('speed');
+        let a = document.getElementById('angle');
+        x.innerText = Math.floor(this.posX);
+        y.innerText = Math.floor(this.posY);
+        s.innerText = this.spd;
+        a.innerText = Math.floor(this.angl*100)/100;
+        document.getElementById('e1').innerText=" "+uno.substring(x.innerText.length,4);
+        document.getElementById('e2').innerText=" "+dos.substring(y.innerText.length,4);
+        document.getElementById('e3').innerText=" "+tre.substring(s.innerText.length,5);
+        document.getElementById('e4').innerText=" "+qua.substring(a.innerText.length,5);
+      }
+      resetStats(){
+        this.posX=0; this.posY=0; this.spd=0;
+      }
+      translateStats(){
+        player.speed = 8*this.spd; player.moveAngle = this.angl;
+      }
     }
   </script>
 
