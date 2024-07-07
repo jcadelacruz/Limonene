@@ -17,9 +17,9 @@ SHOOTER EFFECTS
   shooterKnockback(in px),
   weight(percentage effect on shooter's speed) NOTE: executed upon un/equip (passive)
 
-    Name         constructor(bS,r  ,bSz,s   ,   bC,rR,mS,   d,m   ,k ,   sK,w   )
-var standardGun = new Weapon(20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08);
-var sword
+    Name         constructor(n       ,  bS,r  ,bSz,s   ,  bC,rR,mS,  d ,m   ,k ,  sK,w   );
+var standardGun = new Weapon("pistol",  20,100,5  ,0.2 ,  1 ,10,1 ,  1 ,null, 8,  10,0.08);
+var sword       = new Weapon("sword" ,  30,140,110,0.78,  3 ,10,1 ,  1 ,null,16,  3 ,0.2 );
 var shotgun
 var sniper
 var grenade

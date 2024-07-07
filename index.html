@@ -62,16 +62,16 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         //UI
       initializeJoystickAndFunctions();
       initializeMoveButtons();
-      initializePauseBtn();
         //game instances
       initializeInstances();
+      initializePauseBtn();
     });
+    //GENERAL functions
     function resize(){
       screenWidth = window.innerWidth; screenHeight = window.innerHeight;
       resizeTo(screenWidth, screenHeight);
     }
     function startTimer(){ timer = setInterval(update, 1000/FRAMERATE);}
-    //GENERAL functions
     function update(){
         currentRoom.display();
         currentRoom.updatePopulation();
@@ -131,6 +131,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
           d.style.backgroundColor = "white";
           d.style.borderRadius = "65%";
           d.style.rotate = dir+"rad";
+          d.style.position = "absolute";
         document.getElementById(currentRoom.name).appendChild(d);
         this.disp = d;
       }
@@ -165,7 +166,8 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
     }
     class Weapon{
-      constructor(bS,r,bSz,s,   bC,rD,mS,   d, m,   k,   sK,w){
+      constructor(n,  bS,r,bSz,s,   bC,rD,mS,   d, m,   k,   sK,w){
+        this.name = n;
         this.bulletSpeed = bS; this.range = r; this.bulletSize = bSz, this.spread = s;//bullet movement identity
         this.bulletCount = bC; this.reloadDuration = rD; this.magSize = mS;//bullet use identity
         this.damage = d; this.magicEffect = m; this.knockback = k;//victim effects
@@ -176,7 +178,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       executeWeaponFunction(e){
         let aimDir = e.moveAngle;
         for(let i = 0; i < this.bulletCount; i++){
-          let es2 = entitySize/2;
+          let es2 = (entitySize - this.bulletSize)/2;
           let b = new Bullet(this, this.bulletSpeed, this.bulletSize, aimDir, e.x+(es2), e.y+(es2));
           this.bullets.push(b);
           aimDir += this.spread;
@@ -186,7 +188,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         for(let i = 0; i < this.bullets.length; i++){
           this.bullets[i].disp.remove();
         }
-        bullets = [];
+        this.bullets = [];
       }
       update(){
         for(let i = 0; i < this.bullets.length; i++){
@@ -195,8 +197,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
     }
       //ROOM
-    var roomList = [];
-    var currentRoom;
+    var roomList = [], currentRoom;
     const roomSize = 500;
     class Room{
       constructor(n, x, y, ex, ey){
@@ -394,6 +395,10 @@ console.log("going up");
       }
     }
     class Player extends Entity{
+      constructor(h, s, sp, x, y){
+        super(h, s, sp, x, y);
+        this.inventory = [new Weapon("pistol",  20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08)];
+      }
       update(){
         //check if near exit of room
         let gap = 5;
@@ -455,13 +460,13 @@ console.log("going up");
     }
 
   //PAUSE BUTTON functions
-    var pauseBtn, pauseDiv = document.createElement('div');
-    var paused = false;
+    var pauseBtn, pauseDiv = document.createElement('div'), paused = false;
     const uiTBSize = 100;
     function initializePauseBtn(){
       pauseBtn = new PauseBtn(pauseDiv);
-      inventoryBtn = new UITransportBtn("inventory","yellow", document.createElement('div'), "palegoldenrod");
-      settingsBtn = new UITransportBtn("settings","lightgreen", document.createElement('div'), "green");
+      inventoryBtn = new InventoryBtn("inventory","yellow", document.createElement('div'), "palegoldenrod");
+      let settingsDiv = document.createElement('div');
+      settingsBtn = new UITransportBtn("settings","lightgreen", settingsDiv, "green");
       storeBtn = new UITransportBtn("store","gray", document.createElement('div'), "slategray");
       quitBtn = new UITransportBtn("quit","palevioletred", document.createElement('div'), "pink");
     }
@@ -472,15 +477,17 @@ console.log("going up");
         this.myOpenDiv = this.openDiv.bind(this);
         this.myCloseDiv = this.closeDiv.bind(this);
         //div element
+        d.id = n;
         d.style = "width: 100%; height: 100%; opacity: 95%; position: fixed; top: 0; left: 0; visibility: hidden; background-color: "+dc+"; z-index: "+(PAUSE_ZINDEX-1)+";";
           //appending
         this.divElement = d;
         document.getElementById('body').appendChild(d);
+        this.initializeContents();
         //htmlElement button
         let h = document.createElement('button');
         h.style = "background-color: "+c+"; width: "+uiTBSize+"px; height: "+uiTBSize+"px; opacity: 90%; margin: 30px; z-index: "+(PAUSE_ZINDEX-1)+"; display: flex; justify-content: center; align-items: center;font-family: inherit;";
         let l = document.createElement('p'); l.innerText = this.name;
-        l.style = "color: black; font-family: inherit; font-weight: bolder";
+        l.style = "color: black; font-family: inherit; font-weight: bolder;";
         h.appendChild(l);
           //function
         h.addEventListener('click', this.myOpenDiv);
@@ -489,14 +496,62 @@ console.log("going up");
         pauseBtn.divElement.appendChild(this.htmlElement)
       }
       openDiv(){
+        //close and open respective divs
         pauseBtn.divElement.style.visibility = "hidden";
-        pauseBtn.htmlElement.innerText = "back";
         this.divElement.style.visibility = 'visible';
+        //pauseBtn function replacement
+        pauseBtn.htmlElement.innerText = "back";
         pauseBtn.replaceFunction(this);
       }
       closeDiv(){
         this.divElement.style.visibility = 'hidden';
         pauseBtn.divElement.style.visibility = 'visible';
+      }
+      initializeContents(){}
+    }
+    const invBtnSize = 60, invBtnMarginSize = 10, invBtnSizeH = 60;
+    class InventoryBtn extends UITransportBtn{
+      openDiv(){
+        //close and open respective divs
+        pauseBtn.divElement.style.visibility = "hidden";
+        this.divElement.style.visibility = 'visible';
+        //pauseBtn function replacement
+        pauseBtn.htmlElement.innerText = "back";
+        pauseBtn.replaceFunction(this);
+        this.updateInventoryDiv();
+      }
+      initializeContents(){
+        //styling the div
+        let i = document.createElement('div'); i.id = "inventoryPortion";
+        i.style = "width: 100%; height: 100%; flex-direction: column; align-items: flex-start; justify-content: flex-start;";
+        this.divElement.appendChild(i);
+        //display the inventory
+        this.setColumns();
+      }
+      setColumns(){
+        let i = document.getElementById('inventoryPortion');
+        i.innerText = "";
+        let latestRow, cols = Math.floor((screenWidth-100)/(invBtnSize+(invBtnMarginSize*2)));
+        for(let j=0; j<player.inventory.length; j++){
+          //make row
+          if(j%cols===0){
+            latestRow = document.createElement('div'); latestRow.id = "row"+(j+1);
+            latestRow.style = "display: flex; flex-direction: row; align-items: flex-start; justify-content: flex-start;";
+            i.appendChild(latestRow);
+          }
+          //make item element
+          let w = document.createElement('div'); w.id = player.inventory[j].name;
+          let p = document.createElement('p'); p.innerText = player.inventory[j].name;
+          w.appendChild(p);
+          w.style = "width: "+invBtnSize+"px; height: "+invBtnSizeH+"px; background-color: rgba(10, 10, 10, 0.9); color: white; font-size: 14px; font-weight: regular; font-family: inherit; margin: "+invBtnMarginSize+"px; display: flex; align-items: center; justify-content: center;";
+          latestRow.appendChild(w);
+        }
+      }
+      updateInventoryDiv(){
+        let indexA = null, indexB = null;
+        if(moveBtnA.weapon!==null) indexA = player.inventory.indexOf(moveBtnA.weapon);
+        if(moveBtnB.weapon!==null) indexB = player.inventory.indexOf(moveBtnB.weapon);
+        this.setColumns();
       }
     }
     class PauseBtn{
@@ -633,7 +688,6 @@ console.log("going up");
     function btnBFunction(){
       document.getElementById("body").style.backgroundColor = "orange";
     }*/
-
   //JOYSTICK functions
     var joystick;
     const INITIALRADIUS = 60, INITIALMARGIN = 40;
