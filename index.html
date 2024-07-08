@@ -397,7 +397,7 @@ console.log("going up");
     class Player extends Entity{
       constructor(h, s, sp, x, y){
         super(h, s, sp, x, y);
-        this.inventory = [new Weapon("pistol",  20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08)];
+        this.inventory = [new Weapon("pistol",  20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08), new Weapon("sword" ,  30,140,110,0.78,  3 ,10,1 ,  1 ,null,16,  3 ,0.2 ), new Weapon("musket",  25,80 ,7  ,0.4 ,  5 ,99,5 ,  4 ,null,13,  14,0.25)];
       }
       update(){
         //check if near exit of room
@@ -510,6 +510,7 @@ console.log("going up");
       initializeContents(){}
     }
     const invBtnSize = 60, invBtnMarginSize = 10, invBtnSizeH = 60;
+    var selectedWeaponIndex = null;
     class InventoryBtn extends UITransportBtn{
       openDiv(){
         //close and open respective divs
@@ -541,17 +542,85 @@ console.log("going up");
           }
           //make item element
           let w = document.createElement('div'); w.id = player.inventory[j].name;
-          let p = document.createElement('p'); p.innerText = player.inventory[j].name;
+          let a = document.createElement('p'); a.id = player.inventory[j].name + "ID";
+          a.style.margin = "0";
+          w.appendChild(a);
+          let p = document.createElement('p'); p.id = player.inventory[j].name + "Label";
+          p.innerText = player.inventory[j].name;
+          p.style.margin = "0";
           w.appendChild(p);
-          w.style = "width: "+invBtnSize+"px; height: "+invBtnSizeH+"px; background-color: rgba(10, 10, 10, 0.9); color: white; font-size: 14px; font-weight: regular; font-family: inherit; margin: "+invBtnMarginSize+"px; display: flex; align-items: center; justify-content: center;";
+          w.style = "width: "+invBtnSize+"px; height: "+invBtnSizeH+"px; background-color: rgba(10, 10, 10, 0.9); color: white; font-size: 14px; font-weight: regular; font-family: inherit; margin: "+invBtnMarginSize+"px; display: flex; flex-direction: column; align-items: center; justify-content: center;";
+            //function
+          w.addEventListener('click', this.clickItemElement);
           latestRow.appendChild(w);
+        }
+      }
+      clickItemElement(){
+        let selectedText = "[THIS]", equippedText = "BTN", prevSelectedWeaponIndex = selectedWeaponIndex;
+        //find weapon index in inventory
+        for(let i=0; i<player.inventory.length; i++){
+          if(player.inventory[i].name === this.id) selectedWeaponIndex = i;  
+        }
+        if(selectedWeaponIndex===null) console.log("error in clickItemElement()");
+          //if something else was selected
+        if(selectedWeaponIndex!==prevSelectedWeaponIndex&&prevSelectedWeaponIndex!==null){
+          let itid = document.getElementById(player.inventory[prevSelectedWeaponIndex].name + "ID");//unselect
+          itid.innerText = "";
+        }
+        
+        //IDENTIFY STATE
+        let it = document.getElementById(player.inventory[selectedWeaponIndex].name + "ID");
+        if(it.innerText.substring(0,1)==="["){
+//console.log("has [");
+
+          if(it.innerText.substring(0, selectedText.length)===selectedText){//IF SELECTED
+            //console.log("selected");
+            if(moveBtnA.weapon===null || moveBtnB.weapon!==null){
+              //console.log("equipping to A");
+              if(moveBtnA.weapon!==null){
+                let ib = document.getElementById(moveBtnA.weapon.name + "ID");
+                ib.innerText = "";
+                moveBtnA.unequipWeapon();
+              }
+              moveBtnA.setWeapon(player.inventory[selectedWeaponIndex]);
+              it.innerText = "["+equippedText+"A]";
+            }else if(moveBtnB.weapon===null){
+              //console.log("equipping to B");
+              moveBtnB.setWeapon(player.inventory[selectedWeaponIndex]);
+              it.innerText = "["+equippedText+"B]";
+            }
+            selectedWeaponIndex = null;
+          }else if(it.innerText.substring(1,equippedText.length+1)===equippedText){//if equipped at all
+            //console.log("equipped");
+            
+            if(it.innerText.substring(equippedText.length+1,equippedText.length+2)==="A"){//IF EQUIPPED BY BTNA
+              moveBtnA.unequipWeapon();
+            
+            }else if(it.innerText.substring(equippedText.length+1,equippedText.length+2)==="B"){//IF EQUIPPED BY BTNB
+              moveBtnB.unequipWeapon();
+            }
+            it.innerText = "";//unselect
+          }
+
+          
+        }else{//UNSELECTED
+          //console.log("unselected");
+          //make it selected
+          it.innerText = selectedText;
         }
       }
       updateInventoryDiv(){
         let indexA = null, indexB = null;
-        if(moveBtnA.weapon!==null) indexA = player.inventory.indexOf(moveBtnA.weapon);
-        if(moveBtnB.weapon!==null) indexB = player.inventory.indexOf(moveBtnB.weapon);
         this.setColumns();
+        if(moveBtnA.weapon!==null){
+          indexA = player.inventory.indexOf(moveBtnA.weapon);
+          console.log(document.getElementById(player.inventory[indexA].name+"ID"));
+          document.getElementById(player.inventory[indexA].name+"ID").innerText = "[BTNA]";
+        }
+        if(moveBtnB.weapon!==null){
+          indexB = player.inventory.indexOf(moveBtnB.weapon);
+          document.getElementById(player.inventory[indexB].name+"ID").innerText = "[BTNB]";
+        }
       }
     }
     class PauseBtn{
