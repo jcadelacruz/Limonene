@@ -123,6 +123,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       constructor(w, s, sz, dir, x,y){
         this.weapon = w;
         this.speed = s; this.size = sz; this.direction = dir;
+        this.sz22 = (this.size/2)*(this.size/2);
         this.x = x; this.y = y;
         
         let d = document.createElement('div');
@@ -152,13 +153,42 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         else this.y = y;
       }
       collides(){//pseudocode
-        let col = false;
-        let entity = "";
-        if(1<2) return entity; 
-        return col;
+        //find closest entity
+        let ce = null;
+        let shortestDistance = null;
+        for(let i=0; i<currentRoom.entityPopulation.length; i++){
+          if(currentRoom.entityPopulation[i]===player) continue;
+          let x = (currentRoom.entityPopulation[i].x - this.x);
+          let y = (currentRoom.entityPopulation[i].y - this.y);
+          let distance = (x*x) + (y*y);
+          if(distance<shortestDistance || shortestDistance===null){
+            shortestDistance = distance;
+            ce = currentRoom.entityPopulation[i];
+          }
+        }
+        //see if it collides
+        if(shortestDistance!==null){
+          if(ce.contains(this.x, this.y)) return ce;
+          else if(ce.contains(this.x+ce.size, this.y+ce.size)) return ce;
+          else if(ce.contains(this.x+ce.size, this.y)) return ce;
+          else if(ce.contains(this.x, this.y+ce.size)) return ce;
+        if(this.size>entitySize){
+          if(this.contains(ce.x, ce.y)) return ce;
+          else if(this.contains(ce.x+entitySize, ce.y+entitySize)) return ce;
+          else if(this.contains(ce.x, ce.y+entitySize)) return ce;
+          else if(this.contains(ce.x+entitySize, ce.y)) return ce;
+        }}
+        return -1;
       }
-      executeEffect(e){//pseudocode
+      contains(x, y){//assuming bullet is a circle
+        let x2 = (x-(this.x+(this.size/2)))*(x-(this.x+(this.size/2))), y2 = (y-(this.y+(this.size/2)))*(y-(this.y+(this.size/2)));
+        if((this.sz22)>(x2+y2)) return true;
+        else return false;
+      }
+      executeEffect(e){
         if(e===-1) return;
+        e.attack(this.weapon.damage);
+        console.log(this.weapon.name + " hit " + e.name);
       }
       display(){
         this.disp.style.left = this.x + "px";
@@ -210,11 +240,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         let l = this.entityPopulation.length;
         let r = currentRoom;
         for(let i = 0; i < l; i++){
-          try{
+          //try{
             this.entityPopulation[i].update();
             this.entityPopulation[i].display();
-          }
-          catch(err){}
+          //}
+          //catch(err){}
         }
       }
       initializePopulation(){
@@ -370,7 +400,7 @@ console.log("going up");
         let r = this.findRoomAtDirection();
         if(r!==-1)currentRoom.entityTransfersTo(r, this);
       }
-      contains(x, y){
+      contains(x, y){//assuming entity is a box
         let m = 8;//margin of error
         if( (this.x-m<x && x<this.x+m+entitySize) && (this.y-m<y && y<this.y+m+entitySize) ) return true;
       }
@@ -392,6 +422,17 @@ console.log("going up");
       }
       attackPlayer(){
         
+      }
+      attack(damage){
+        this.hp-=damage;
+        if(this.hp===0){
+          this.hp = 0;
+          this.performDeath();
+        }
+        if(this.hp>this.maxHP) this.hp = this.maxHP;
+      }
+      performDeath(){
+        currentRoom.entityTransfersTo(new Room("dead", 100,100,0,0), this);
       }
     }
     class Player extends Entity{
