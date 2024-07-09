@@ -132,9 +132,28 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
           d.classList.add("bullet");
           d.style.visibility = "hidden";
           d.style.width = sz+"px";d.style.height = sz+"px";
-          d.style.backgroundColor = "white";
-          d.style.borderRadius = "100%";
-          d.style.rotate = dir+"rad";
+          //d.style.backgroundColor = "black";
+          //d.style.borderRadius = "100%";
+          d.style.zIndex = ENTITY_ZINDEX+1;
+        let ts = 100;
+        let trail = document.createElement('div');
+        trail.style.width = sz+ts+"px";trail.style.height = sz/2+"px";
+        trail.style.backgroundColor = "lemonchiffon";
+        trail.style.opacity = "0.4";
+        trail.style.transformOrigin = "100% 50%";
+        trail.style.rotate = -dir+"rad";
+        trail.style.position = "absolute";
+        trail.style.left = -(ts+sz/2)+"px";
+        trail.style.bottom = sz/4+"px";
+        let b = document.createElement('div');
+        b.style.width = sz+"px";b.style.height = sz+"px";
+        b.style.backgroundColor = "white";
+        b.style.borderRadius = "100%";
+        b.style.left = "0";
+        b.style.bottom = "0";
+        d.appendChild(trail);
+        d.appendChild(b);
+          //d.style.rotate = -dir+"rad";
           d.style.position = "absolute";
         document.getElementById(currentRoom.name).appendChild(d);
         this.disp = d;
@@ -177,19 +196,23 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         }
         //see if it collides
         if(ce!==null){
-          if(ce.contains(this.x, this.y)){
+          let x = (this.x+this.size/2), y = (this.y+this.size/2);
+          if(ce.contains(x, y)){console.log("1");
             return ce;}
-          else if(ce.contains(this.x+ce.seze, this.y+ce.seze)){
+          else if(ce.contains(this.x, y)){console.log("2");
             return ce;}
-          else if(ce.contains(this.x+ce.seze, this.y)){
+          else if(ce.contains(x, this.y)){console.log("3");
             return ce;}
-          else if(ce.contains(this.x, this.y+ce.seze)){
+          else if(ce.contains(this.x+this.size, y)){console.log("4");
+            return ce;}
+          else if(ce.contains(x, this.y+this.size)){console.log("5");
             return ce;}
         if(this.size>ce.seze){
-          if(this.contains(ce.x, ce.y)) return ce;
-          else if(this.contains(ce.x+ce.seze, ce.y+ce.seze)) return ce;
-          else if(this.contains(ce.x, ce.y+ce.seze)) return ce;
-          else if(this.contains(ce.x+ce.seze, ce.y)) return ce;
+          console.log("eeeee");
+          if(this.contains(ce.x, ce.y)){return ce;console.log("5")}
+          else if(this.contains(ce.x+ce.seze, ce.y+ce.seze)){ return ce;console.log("6")}
+          else if(this.contains(ce.x, ce.y+ce.seze)) {return ce;console.log("7")}
+          else if(this.contains(ce.x+ce.seze, ce.y)) {return ce;console.log("8")}
         }}
         let doesNotCollide = "false";
         return doesNotCollide;
@@ -201,8 +224,9 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
       executeEffect(e){
         if(e==="false") return;
-        //damage
-        e.attack(this.weapon.damage);
+        //effects
+        e.attack(this.weapon.damage);//damage
+        e.moveAt(this.direction, this.weapon.knockback);
         //remove bullet
         this.remove();
         console.log(this.weapon.name + " hit " + e.name);
@@ -233,7 +257,8 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         this.bullets = [];
       }
       executeWeaponFunction(e){
-        let aimDir = e.moveAngle;
+        player.moveAt(player.moveAngle+Math.PI, this.shooterKnockback);
+        let aimDir = e.moveAngle - (this.spread*(this.bulletCount-1)/2);
         for(let i = 0; i < this.bulletCount; i++){
           let es2 = (player.seze - this.bulletSize)/2;
           let b = new Bullet(this, this.bulletSpeed, this.bulletSize, aimDir, e.x+(es2), e.y+(es2));
@@ -432,7 +457,7 @@ console.log("going up");
         if(r!==-1)currentRoom.entityTransfersTo(r, this);
       }
       contains(x, y){//assuming entity is a box
-        let m = 8;//margin of error
+        let m = 0.2;//margin of error
         if( (this.x-m<x && x<this.x+m+this.seze) && (this.y-m<y && y<this.y+m+this.seze) ) return true;
       }
       display(){
@@ -859,7 +884,7 @@ console.log("going up");
         this.weapon = null;
       }
       unequippedWeaponFunction(){
-        console.log("button has no equipped weapon");
+        //console.log("button has no equipped weapon");
       }
       executeWeaponFunction(){
         this.weapon.executeWeaponFunction(player);
