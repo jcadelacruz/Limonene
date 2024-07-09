@@ -1,8 +1,8 @@
 NOTE: all time is in ticks (where standard 24 ticks per second)
 BULLET MOVEMENT
   bulletSpeed(in px per time),
-  range(in px),
-  bulletSize, 
+  range(ticks of lifespan),
+  bulletSize(in px), 
   spread(angle between consecutive bullets in a shot, in radians)
 BULLET USE
   bulletCount(number of bullets shot per shot),
@@ -18,12 +18,12 @@ SHOOTER EFFECTS
   weight(percentage effect on shooter's speed) NOTE: executed upon un/equip (passive)
 
     Name         constructor(n       ,  bS,r  ,bSz,s   ,  bC,rR,mS,  d ,m   ,k ,  sK,w   );
-var standardGun = new Weapon("pistol",  20,100,5  ,0.1 ,  1 ,10,1 ,  1 ,null, 8,  10,0.08);
-var sword       = new Weapon("sword" ,  30,140,110,0.78,  3 ,10,1 ,  1 ,null,16,  3 ,0.2 );
+var standardGun = new Weapon("pistol",  20,100,5  ,0   ,  1 ,10,1 ,  6 ,null,20,  10,0.08);
+var sword       = new Weapon("sword" ,  30,140,110,0.78,  3 ,10,1 ,  8 ,null,16,  3 ,0.2 );
 var shotgun     = new Weapon("musket",  25,80 ,7  ,0.4 ,  5 ,99,5 ,  4 ,null,13,  14,0.25);
-var sniper
-var grenade
-var waterHose
-var campbell    
-var nms
-var electrolysis
+var sniper      = new Weapon("sniper",  40,300,8  ,0   ,  1 ,20,1 , 15 ,null,30,  5 ,0.30);
+var grenade     = new Weapon("bombs" ,  15,200,10 ,0   ,  1 ,30,1 , 20 ,null,10,  30,0.1 );
+var waterHose   = new Weapon("hose"  ,  10,50 ,3  ,0.05,  5 ,50,10,  1 ,null,5 ,  5 ,0.15);
+var campbell    = new Weapon("bio"   ,  25,120,6  ,0.3 ,  3 ,15,3 , 10 ,null,8 ,  8 ,0.30);
+var nms         = new Weapon("nm/s^2",  35,180,7  ,0.2 ,  4 ,25,4 ,  2 ,null,12,  10,0.12);
+var electrolysis= new Weapon("charge",  20,150,5  ,0.4 ,  1 ,25,1 ,  3 ,null,5 ,  15,0.08);
