@@ -145,11 +145,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         let x = this.x + Math.cos(this.direction) * this.speed;
         let y = this.y + Math.sin(this.direction) * this.speed;
         let s = this.size;
-        if(x<=0) this.x = 0;
-        else if(x+s>=roomSize) this.x = roomSize-s;
+        if(x<=0) this.remove();
+        else if(x+s>=roomSize) this.remove();
         else this.x = x;
-        if(y<=0) this.y = 0;
-        else if(y+s>=roomSize) this.y = roomSize-s;
+        if(y<=0) this.remove();
+        else if(y+s>=roomSize) this.remove();
         else this.y = y;
       }
       collides(){//pseudocode
@@ -167,18 +167,23 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
           }
         }
         //see if it collides
-        if(shortestDistance!==null){
-          if(ce.contains(this.x, this.y)) return ce;
-          else if(ce.contains(this.x+ce.size, this.y+ce.size)) return ce;
-          else if(ce.contains(this.x+ce.size, this.y)) return ce;
-          else if(ce.contains(this.x, this.y+ce.size)) return ce;
+        if(ce!==null){
+          if(ce.contains(this.x, this.y)){
+            return ce;}
+          else if(ce.contains(this.x+entitySize, this.y+entitySize)){
+            return ce;}
+          else if(ce.contains(this.x+entitySize, this.y)){
+            return ce;}
+          else if(ce.contains(this.x, this.y+entitySize)){
+            return ce;}
         if(this.size>entitySize){
           if(this.contains(ce.x, ce.y)) return ce;
           else if(this.contains(ce.x+entitySize, ce.y+entitySize)) return ce;
           else if(this.contains(ce.x, ce.y+entitySize)) return ce;
           else if(this.contains(ce.x+entitySize, ce.y)) return ce;
         }}
-        return -1;
+        let doesNotCollide = "false";
+        return doesNotCollide;
       }
       contains(x, y){//assuming bullet is a circle
         let x2 = (x-(this.x+(this.size/2)))*(x-(this.x+(this.size/2))), y2 = (y-(this.y+(this.size/2)))*(y-(this.y+(this.size/2)));
@@ -186,9 +191,20 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         else return false;
       }
       executeEffect(e){
-        if(e===-1) return;
+        if(e==="false") return;
+        //damage
         e.attack(this.weapon.damage);
+        //remove bullet
+        this.remove();
         console.log(this.weapon.name + " hit " + e.name);
+      }
+      remove(){
+        //remove html
+        this.disp.style.visibility = "hidden";
+        this.disp.remove();
+        //remove from bullets array
+        //let i = this.weapon.bullets.indexOf(this);
+        //this.weapon.bullets.splice(i, 1);
       }
       display(){
         this.disp.style.left = this.x + "px";
@@ -238,11 +254,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
       updatePopulation(){
         let l = this.entityPopulation.length;
-        let r = currentRoom;
         for(let i = 0; i < l; i++){
           //try{
-            this.entityPopulation[i].update();
-            this.entityPopulation[i].display();
+            let e = this.entityPopulation[i];
+            e.update();
+            e.display();
           //}
           //catch(err){}
         }
@@ -298,7 +314,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         }
 
         //remove display
-        document.getElementById(currentRoom.name).removeChild(e.disp);
+        e.disp.remove();
       }
       leave(){
         document.getElementById('playArea').removeChild(document.getElementById(this.name));
@@ -425,20 +441,27 @@ console.log("going up");
       }
       attack(damage){
         this.hp-=damage;
-        if(this.hp===0){
+        if(this.hp<0){
           this.hp = 0;
           this.performDeath();
         }
         if(this.hp>this.maxHP) this.hp = this.maxHP;
       }
       performDeath(){
-        currentRoom.entityTransfersTo(new Room("dead", 100,100,0,0), this);
+        //currentRoom.entityTransfersTo(new Room("dead", 100,100,0,0), this);
+        this.disp.style.visibility = "hidden";
+        this.disp.remove();
+        let l = currentRoom.entityPopulation.indexOf(this);
+        currentRoom.entityPopulation.splice(l,1);
       }
     }
     class Player extends Entity{
       constructor(h, s, sp, x, y){
         super(h, s, sp, x, y);
-        this.inventory = [new Weapon("pistol",  20,100,5  ,0.2 ,   1 ,10,1 ,   1,null,20,   10,0.08), new Weapon("sword" ,  30,140,110,0.78,  3 ,10,1 ,  1 ,null,16,  3 ,0.2 ), new Weapon("musket",  25,80 ,7  ,0.4 ,  5 ,99,5 ,  4 ,null,13,  14,0.25)];
+        this.inventory = [
+          new Weapon("pistol",  20,100,5  ,0.2 ,   1 ,10,1 ,  6 ,null,20,   10,0.08), 
+          new Weapon("sword" ,  30,140,110,0.78,   3 ,10,1 ,  8 ,null,16,  3 ,0.2 ), 
+          new Weapon("musket",  25,80 ,7  ,0.4 ,   5 ,99,5 ,  4 ,null,13,  14,0.25)];
       }
       update(){
         //check if near exit of room

@@ -9,7 +9,7 @@ BULLET USE
   reloadDuration(time it takes to be able to reload one shot),
   magSize(number of shots per fully reload mag)
 VICTIM EFFECTS
-  damage(duh),
+  damage(hp damage per bullet),
   magicEffect(lasting effect on the enemy)
   ^(not counting lasting effects on surroundings, not sure if i wanna do that yet),
   knockback(in px)
