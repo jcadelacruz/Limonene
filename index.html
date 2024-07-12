@@ -5,9 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>Limonene_replit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-  <body style="position: fixed; font-family: 'Lucida Console', 'Courier New','Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; text-align: left; font-weight: bolder;
+  <body class="element-to-disable-zoom" style="position: fixed; font-family: 'Lucida Console', 'Courier New','Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; text-align: left; font-weight: bolder;
     color: darkslategray; background-color: lightslategray;
     " id="body">
     <p style="font-size: 20px; white-space: pre;">
@@ -35,6 +36,10 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     .allow-select {
         user-select: text; -moz-user-select: text; -webkit-user-select: text; -ms-user-select: text;
     }
+    /* Disable double-tap zoom in */
+    .element-to-disable-zoom {
+        touch-action: manipulation;
+    }
     #playArea{
       position: absolute;
       top: 0; left: 0;
@@ -52,6 +57,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ROOM_ZINDEX = 2; ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
       document.addEventListener('touchmove', function(event) {if (event.touches.length > 1) { event.preventDefault();}}, { passive: false });// Disable pinch zoom on the document
+      document.addEventListener('dblclick', function(event) { event.preventDefault();});// Disable double click to zoom
         //display stuff
       resize(); 
       window.addEventListener('resize', resize);
