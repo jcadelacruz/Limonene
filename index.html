@@ -48,7 +48,6 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
 <!---------------------------------------------->
   <script>
   //WINDOW functions
-    
     var FRAMERATE = 24, timer, screenWidth = window.innerWidth, screenHeight = window.innerHeight;
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ROOM_ZINDEX = 2; ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
@@ -262,8 +261,25 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         this.bullets = [];
       }
       executeWeaponFunction(e){
-        player.moveAt(player.moveAngle+Math.PI, this.shooterKnockback);
-        let aimDir = e.moveAngle - (this.spread*(this.bulletCount-1)/2);
+        let aimDir=e.moveAngle;
+        if(settingsBtn.autoAim === true){
+          let ce=null, shortestDistance=999999999;//te is closest entity (closest entity)
+          for(let i=0; i<currentRoom.entityPopulation.length; i++){
+            let e = currentRoom.entityPopulation[i];
+            if(e === player) continue;
+            let x = e.x - player.x; let y = e.y - player.y;
+            x *= x; y *= y;
+            if((x+y)<shortestDistance){
+              shortestDistance = x+y;
+              ce = e;
+            }
+          }
+          if(ce!==null){
+            aimDir = Math.atan2(ce.y-player.y, ce.x-player.x);
+          }
+        }
+        aimDir -= (this.spread*(this.bulletCount-1)/2);
+        player.moveAt(aimDir+Math.PI, this.shooterKnockback);
         for(let i = 0; i < this.bulletCount; i++){
           let es2 = (player.seze - this.bulletSize)/2;
           let b = new Bullet(this, this.bulletSpeed, this.bulletSize, aimDir, e.x+(es2), e.y+(es2));
@@ -611,12 +627,13 @@ console.log("going up");
   //PAUSE BUTTON functions
   if(1==1){
     var pauseBtn, pauseDiv = document.createElement('div'), paused = false;
+    var inventoryBtn, settingsBtn, storeBtn, quitBtn;
     const uiTBSize = 100;
     function initializePauseBtn(){
       pauseBtn = new PauseBtn(pauseDiv);
       inventoryBtn = new InventoryBtn("inventory","yellow", document.createElement('div'), "palegoldenrod");
       let settingsDiv = document.createElement('div');
-      settingsBtn = new UITransportBtn("settings","lightgreen", settingsDiv, "green");
+      settingsBtn = new SettingsBtn("settings","lightgreen", settingsDiv, "green");
       storeBtn = new UITransportBtn("store","gray", document.createElement('div'), "slategray");
       quitBtn = new UITransportBtn("quit","palevioletred", document.createElement('div'), "pink");
     }
@@ -773,6 +790,42 @@ console.log("going up");
         }
       }
     }
+    class SettingsBtn extends UITransportBtn{
+      constructor(n,c,  d,dc){
+        super(n,c,d,dc);
+        
+        this.joystickBuffer = 0;
+        this.sliders = [this.joystickBuffer];
+        
+        this.joystickCardinalDirectionsLock = true;
+        this.autoAim = true;
+        this.toggle = [this.joystickCardinalDirectionsLock, this.autoAim];
+
+        this.moveBtnMode = "twoButtons";
+        this.options = [[this.moveBtnMode, "twoButtons", "joystickAndSwitch"]];
+      }
+      translateFromArrays(){
+        let s = this.sliders, t = this.toggle, o = this.options;
+        this.joystickBuffer = s[0];
+        
+        this.joystickCardinalDirectionsLock = t[0];
+        this.autoAim = t[1];
+
+        this.moveBtnMode = o[0][0];
+      }
+      initializeContents(){
+        
+      }
+      closeDiv(){
+        //standard stuff
+        this.divElement.style.visibility = 'hidden';
+        pauseBtn.divElement.style.visibility = 'visible';
+        //moveBtns
+        if(this.moveBtnMode === "twoButtons"){
+          
+        }
+      }
+    }
     class PauseBtn{
       constructor(d){//assume that pauseDiv is already created
         pauseBtn = this;
@@ -919,6 +972,9 @@ console.log("going up");
       display(){
         this.ammoIndicator.style.rotate = this.rotationValue+"deg";
       }
+      hide(){
+        this.htmlElement.style.visibility = "hidden";
+      }
     }
     function updateMoveBtnAmmoIndicatorRotationValue(){
       //for(let i=0; i<moveBtns.length; i++){
@@ -1019,11 +1075,18 @@ console.log("going up");
         this.checkIfWithinRadius();
           //finalize spd
           this.spd = Math.round(this.spd*100)/100;
+        if(this === joystick){
+          if(settingsBtn.joystickBuffer !== 0) this.spd = (this.spd<settingsBtn.joystickBuffer) ? 0 : this.spd;
+        }
         //angle
         this.angl = Math.atan(this.posY/this.posX);
-        /*if((Math.PI/4)>this.angl && this.angl>(-Math.PI/4)){this.angl = 0;}
-        else if(this.angl<0){ this.angl = -Math.PI/2;}
-          else {this.angl = Math.PI/2;}*///use 4 cardinal directions
+        if(this === joystick){
+          if(settingsBtn.joystickCardinalDirectionsLock === true){
+            if((Math.PI/4)>this.angl && this.angl>(-Math.PI/4)){ this.angl = 0;}
+            else if(this.angl<0){ this.angl = -Math.PI/2;}
+            else {this.angl = Math.PI/2;}//use 4 cardinal directions
+          }
+        }
 
         this.angl = (this.posX<0) ? (Math.PI+this.angl) : ((this.posY<0)?(2*Math.PI)+this.angl:this.angl);
           //convert to degrees if u want
