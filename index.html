@@ -53,6 +53,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
 <!---------------------------------------------->
   <script>
   //WINDOW functions
+  //if(1==1){
     var FRAMERATE = 24, timer, screenWidth = window.innerWidth, screenHeight = window.innerHeight;
     const UI_ZINDEX = 100, PAUSE_ZINDEX = UI_ZINDEX + 1, BG_ZINDEX = 1, ROOM_ZINDEX = 2; ENTITY_ZINDEX = 5, MSG_ZINDEX = 40;//Play area z index should be below 50 
     window.addEventListener('load', () => {
@@ -85,17 +86,27 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       currentRoom.updatePopulation();
       updateMoveBtnAmmoIndicatorRotationValue();
     }
+  //}
 
   //GAME INSTANCES
+  if(1==1){
+    var roomList = [], currentRoom;
+    var rn11 , r01 , r11;
+    var rn10 , r00 , r10;
+    var rn1n1, r0n1, r1n1;
     function initializeInstances(){
       //weapons
       //room
-      var r00 = new Room("home", 0,0, roomSize/2,0);
-      var r01 = new Room("cross", 0,1, roomSize/2,0);
-      var r11 = new Room("kitchen", 1,1, 0,roomSize/2);
-      var rn11 = new Room("badlands", -1,1, roomSize,roomSize/2);
-      var r02 = new Room("heaven", 0,2, roomSize/2,0);
-      roomList = [r00, r01, r11, rn11, r02];
+      r00 = new Room("home", 0,0, roomSize/2,0);
+      r01 = new Room("cross", 0,1, roomSize/2,0);
+      r0n1 = new Room("cross", 0,-1, roomSize/2,0);;
+      r10 = new Room("cross", 1,0, roomSize/2,0);;
+      r11 = new Room("kitchen", 1,1, 0,roomSize/2);
+      r1n1 = new Room("cross", 1,-1, roomSize/2,0);;
+      rn10 = new Room("cross", -1,0, roomSize/2,0);;
+      rn11 = new Room("badlands", -1,1, roomSize,roomSize/2);
+      rn1n1 = new Room("heaven", -1,-1, roomSize/2,0);
+      roomList = [rn11 , r01 , r11, rn10 , r00 , r10, rn1n1, r0n1, r1n1];
       //entities
       var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5);
       var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
@@ -306,8 +317,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
     }
       //ROOM
-    var roomList = [], currentRoom;
-    const roomSize = 500;
+    const roomSize = 750;
     class Room{
       constructor(n, x, y, ex, ey){
         this.name = n;
@@ -382,17 +392,20 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       leave(){
         document.getElementById('playArea').removeChild(document.getElementById(this.name));
       }
-    }
-    function getRoom(x,y){
-      let l = roomList.length;
-      for(let i = 0; i<l; i++){
-        if(roomList[i].x == x && roomList[i].y == y) return roomList[i];
+      static getRoom(x,y){
+        let l = roomList.length;
+        for(let i = 0; i<l; i++){
+          if(roomList[i].x == x && roomList[i].y == y) return roomList[i];
+        }
+        return -1;
       }
-      return -1;
+      static generateWave(){
+        
+      }
     }
       //ENTITY
     var player;
-    const sightRange = 150, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, initialSeze = 50, dropSize = 20;
+    const sightRange = 250, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, initialSeze = 40, dropSize = 20;
     class Entity{
       constructor(h, s, sp, x, y){
         //attack
@@ -453,25 +466,25 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         let r = currentRoom;
         switch(dir){
           case "left":
-            r = getRoom(currentRoom.x-1, currentRoom.y);
+            r = Room.getRoom(currentRoom.x-1, currentRoom.y);
             if(r===-1)break;
             console.log("going left");
             this.x = roomSize-this.seze-1; this.y = roomSize/2;
             break;
           case "right":
-            r = getRoom(currentRoom.x+1, currentRoom.y);
+            r = Room.getRoom(currentRoom.x+1, currentRoom.y);
             if(r===-1)break;
             console.log("going right");
             this.x = 1; this.y = roomSize/2;
             break;
           case "down":
-            r = getRoom(currentRoom.x, currentRoom.y-1);
+            r = Room.getRoom(currentRoom.x, currentRoom.y-1);
             if(r===-1)break;
             console.log("going down: "+currentRoom.x+","+currentRoom.y);
             this.x = roomSize/2; this.y = roomSize-this.seze-1;
             break;
           case "up":
-            r = getRoom(currentRoom.x, currentRoom.y+1);
+            r = Room.getRoom(currentRoom.x, currentRoom.y+1);
             if(r===-1)break;
 console.log("going up");
             this.x = roomSize/2; this.y = 1;
@@ -528,9 +541,9 @@ console.log("going up");
         let f = FRAMERATE;
         this.inventory = [
        //constructor(n       ,  bS,r  ,bSz,s   ,  bC,rD  ,mS,  d ,m   ,k ,  sK,w   );
-          new Weapon("pistol",  20,16 ,5  ,0.2 ,  1 ,24  ,6 ,  6 ,null,20,  10,0.08),
+          new Weapon("pistol",  20,27 ,5  ,0.2 ,  1 ,24  ,6 ,  6 ,null,20,  10,0.08),
           new Weapon("sword" ,  60,2  ,110,0.78,  3 ,1   ,1 ,  8 ,null,16,  3 ,0.2 ), 
-          new Weapon("musket",  25,4  ,7  ,0.4 ,  5 ,144 ,5 ,  4 ,null,13,  14,0.25)/*,
+          new Weapon("musket",  25,14 ,7  ,0.4 ,  5 ,144 ,5 ,  4 ,null,13,  14,0.25)/*,
           new Weapon("sniper",  40,300,8  ,0   ,  1 ,20 ,1 , 15 ,null,30,  5 ,0.30),
           new Weapon("bombs" ,  15,200,10 ,0   ,  1 ,30 ,1 , 20 ,null,10,  30,0.1 ),
           new Weapon("hose"  ,  10,50 ,3  ,0.05,  5 ,50 ,10,  1 ,null,5 ,  5 ,0.15),
@@ -563,7 +576,7 @@ console.log("going up");
         this.updateEquippedWeapons();
       }
       transferRoomsTo(xAdd, yAdd){
-        let r = getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
+        let r = Room.getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
         //let r = this.findRoomAtDirection();
         if(r!==-1){
           currentRoom.entityTransfersTo(r, this);
@@ -629,7 +642,16 @@ console.log("going up");
         
       }
     }
-
+      //ENTITY ADDITIONS
+    class MovePath{
+      
+    }
+    class AttackPath extends MovePath{
+      
+    }
+    
+  }
+    
   //PAUSE BUTTON functions
   if(1==1){
     var pauseBtn, pauseDiv = document.createElement('div'), paused = false;
@@ -803,7 +825,7 @@ console.log("going up");
         this.joystickBuffer = 0;
         this.sliders = [this.joystickBuffer];
         
-        this.joystickCardinalDirectionsLock = true;
+        this.joystickCardinalDirectionsLock = false;
         this.autoAim = true;
         this.toggle = [this.joystickCardinalDirectionsLock, this.autoAim];
 
