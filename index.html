@@ -98,19 +98,27 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       //weapons
       //room
       r00 = new Room("home", 0,0, roomSize/2,0);
-      r01 = new Room("cross", 0,1, roomSize/2,0);
-      r0n1 = new Room("cross", 0,-1, roomSize/2,0);;
-      r10 = new Room("cross", 1,0, roomSize/2,0);;
+      r01 = new Room("t spin", 0,1, roomSize/2,0);
+      r0n1 = new Room("backyard", 0,-1, roomSize/2,0);
+      r10 = new Room("closet", 1,0, roomSize/2,0);
       r11 = new Room("kitchen", 1,1, 0,roomSize/2);
-      r1n1 = new Room("cross", 1,-1, roomSize/2,0);;
-      rn10 = new Room("cross", -1,0, roomSize/2,0);;
+      r1n1 = new Room("hell", 1,-1, roomSize/2,0);
+      rn10 = new Room("cross", -1,0, roomSize/2,0);
       rn11 = new Room("badlands", -1,1, roomSize,roomSize/2);
       rn1n1 = new Room("heaven", -1,-1, roomSize/2,0);
       roomList = [rn11 , r01 , r11, rn10 , r00 , r10, rn1n1, r0n1, r1n1];
       //entities
-      var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5);
-      var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
-      var e01_03 = new Entity(100, 10, 2, 30,2*roomSize/5);
+        //entity behaviors
+      var chase_LToR = new ChaseWhenWithinRange(
+        [
+          {x:0,y:roomSize-200,speed:1},
+          {x:roomSize-initialSeze,y:roomSize-200,speed:1}
+        ], sightRange);
+        //entity declarations
+      var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5, chase_LToR, null);
+      //var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
+      //var e01_03 = new Entity(100, 10, 2, 30,2*roomSize/5);
+      /*
       var e01_04 = new Entity(100, 10, 2, 40,2*roomSize/5);
       var e01_11 = new Entity(100, 10, 2, 0,roomSize/5);
       var e01_12 = new Entity(100, 10, 2, 20,roomSize/5);
@@ -119,11 +127,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       var e01_21 = new Entity(100, 10, 2, 0,3*roomSize/5);
       var e01_22 = new Entity(100, 10, 2, 20,3*roomSize/5);
       var e01_23 = new Entity(100, 10, 2, 30,3*roomSize/5);
-      var e01_24 = new Entity(100, 10, 2, 40,3*roomSize/5);
+      var e01_24 = new Entity(100, 10, 2, 40,3*roomSize/5);*/
       r01.entityPopulation = [];
         //player
       player = new Player(100, 10, 0, 0,0);
-      r00.entityPopulation = [e01_02, e01_03]//, e01_04, e01_011, e01_012, e01_013, e01_014, e01_021, e01_022, e01_023, e01_024];
+      //r00.entityPopulation = [e01_02, e01_03]//, e01_04, e01_011, e01_012, e01_013, e01_014, e01_021, e01_022, e01_023, e01_024];
       r01.entityPopulation = [player, e01_01];
       currentRoom = r01;
 
@@ -407,7 +415,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
     var player;
     const sightRange = 250, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, initialSeze = 40, dropSize = 20;
     class Entity{
-      constructor(h, s, sp, x, y){
+      constructor(h, s, sp, x, y, mp, ap){
         //attack
         this.maxHP = h;
         this.hp = h;
@@ -421,6 +429,9 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         this.trackingPlayer = true;
         //display
         this.disp = null;
+        //behavior
+        this.movePath = mp;
+        this.atkPath = ap;
       }
       move(){
         this.moveAt(this.moveAngle, this.speed);
@@ -437,29 +448,11 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       }
       update(turn){
         //pathfinding
-        let px = player.x - this.x; let py = player.y - this.y;
-        let d = (px*px)+(py*py);
-        if( d<=sightRangeSquared){//checking if entity is near the player
-          let m = Math.atan(py/px);
-          this.moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
-          this.trackingPlayer = true;
-          if(d<=attackRangeSquared){
-            this.attackPlayer();
-            return;//to give player space ig?
-          }
-        }
-        else{//case; not near player
-          //if(this.trackingPlayer===true){
-            px = currentRoom.exitX - this.x - this.seze/2; py = currentRoom.exitY - this.y - this.seze/2;
-            let m = Math.atan(py/px);
-            this.moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
-            this.trackingPlayer = false;
-          //}
-          //check if near exit of room
-          if(this.contains(currentRoom.exitX, currentRoom.exitY)){ this.transferRooms();}
-        }
+        this.movePath.update(this.x,this.y);
+        this.moveAngle = this.movePath.getAngle(this.x, this.y);
+        let s = this.movePath.getSpeedModifier();
         //movement
-        this.move();
+        this.moveAt(this.moveAngle, this.speed * s);
       }
       findRoomAtDirection(){
         let dir = (currentRoom.exitX!==roomSize/2) ? ((currentRoom.exitX===0)? "left" : "right") : ((currentRoom.exitY===0)? "down" : "up" );
@@ -537,7 +530,7 @@ console.log("going up");
     }
     class Player extends Entity{
       constructor(h, s, sp, x, y){
-        super(h, s, sp, x, y);
+        super(h, s, sp, x, y, new MovePath([]), new AttackPath());
         let f = FRAMERATE;
         this.inventory = [
        //constructor(n       ,  bS,r  ,bSz,s   ,  bC,rD  ,mS,  d ,m   ,k ,  sK,w   );
@@ -644,7 +637,58 @@ console.log("going up");
     }
       //ENTITY ADDITIONS
     class MovePath{
-      
+      constructor(p){
+        this.vertexPoints = p;
+        this.currentVertex = 0;
+      }
+      update(x,y){
+        let v = this.vertexPoints[this.currentVertex];
+        let px = x - v.x; let py = y - v.y;
+        let d = (px*px)+(py*py);
+        if(d <= attackRangeSquared){//if current vertex is close enough to player
+          this.moveToNextVertex();
+        }
+      }
+      moveToNextVertex(){
+        this.currentVertex++;
+        if(this.currentVertex == this.vertexPoints.length) this.currentVertex=0;
+      }
+      getAngle(x, y){
+        let dx = this.vertexPoints[this.currentVertex].x - x;
+        let dy = this.vertexPoints[this.currentVertex].y - y;
+        let angle = Math.atan2(dy, dx);
+        return angle;
+      }
+      getSpeedModifier(){
+        return this.vertexPoints[this.currentVertex].speed;
+      }
+    }
+    class ChaseWhenWithinRange extends MovePath{
+      constructor(p, r){
+        super(p);
+        this.range = r;//sight range (chasing range)
+        this.rangeSquared = r*r;
+        this.chasingPlayer = false;
+      }
+      getAngle(x,y){
+        let moveAngle = 0;
+        
+        let px = player.x - x; let py = player.y - y;
+        let d = (px*px)+(py*py);
+        if(d<=this.rangeSquared){//checking if entity is near the player
+          this.chasingPlayer = true;
+          let m = Math.atan(py/px);
+          moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
+        }
+        else{//case; not near player
+          this.chasingPlayer = false;
+          let dx = this.vertexPoints[this.currentVertex].x - x;
+          let dy = this.vertexPoints[this.currentVertex].y - y;
+          moveAngle = Math.atan2(dy, dx);
+        }
+        
+        return moveAngle;
+      }
     }
     class AttackPath extends MovePath{
       
