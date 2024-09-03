@@ -16,6 +16,7 @@ X:<span id="x_coordinate"></span><span id="e1"></span>Lorem ipsum dolor sit amet
 Y:<span id="y_coordinate"></span><span id="e2"></span>Quis viverra nibh cras pulvinar mattis nunc sed blandit. Velit scelerisque in dictum non consectetur a erat nam. Nibh cras pulvinar mattis nunc sed blandit libero volutpat sed. Nisl pretium fusce id velit ut. Orci ac auctor augue mauris. Dui vivamus arcu felis bibendum ut tristique et. Elit ullamcorper dignissim cras tincidunt lobortis feugiat.
 Speed:<span id="speed"></span><span id="e3"></span>Viverra aliquet eget sit amet tellus cras adipiscing enim. Volutpat sed cras ornare arcu. Fringilla ut morbi tincidunt augue interdum. Pulvinar etiam non quam lacus suspendisse faucibus. Quisque egestas diam in arcu. Sed nisi lacus sed viverra tellus.
 Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus. Et malesuada fames ac turpis egestas maecenas. Vitae suscipit tellus mauris a diam maecenas sed. Magna eget est lorem ipsum dolor sit amet consectetur adipiscing.
+HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus ridiculus dui, parturient a eget. Congue faucibus fames et lorem curabitur malesuada. Fusce himenaeos est donec consectetur dui maecenas.
     </p>
     <div id="playArea"></div>
     <div id="UI">
@@ -85,6 +86,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       currentRoom.display();
       currentRoom.updatePopulation();
       updateMoveBtnAmmoIndicatorRotationValue();
+      joystick.displayStats();
     }
   //}
 
@@ -225,22 +227,22 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         //see if it collides
         if(ce!==null){
           let x = (this.x+this.size/2), y = (this.y+this.size/2);
-          if(ce.contains(x, y)){console.log("1");
+          if(ce.contains(x, y)){//console.log("1");
             return ce;}
-          else if(ce.contains(this.x, y)){console.log("2");
+          else if(ce.contains(this.x, y)){//console.log("2");
             return ce;}
-          else if(ce.contains(x, this.y)){console.log("3");
+          else if(ce.contains(x, this.y)){//console.log("3");
             return ce;}
-          else if(ce.contains(this.x+this.size, y)){console.log("4");
+          else if(ce.contains(this.x+this.size, y)){//console.log("4");
             return ce;}
-          else if(ce.contains(x, this.y+this.size)){console.log("5");
+          else if(ce.contains(x, this.y+this.size)){//console.log("5");
             return ce;}
         if(this.size>ce.seze){
-          console.log("eeeee");
-          if(this.contains(ce.x, ce.y)){return ce;console.log("5")}
-          else if(this.contains(ce.x+ce.seze, ce.y+ce.seze)){ return ce;console.log("6")}
-          else if(this.contains(ce.x, ce.y+ce.seze)) {return ce;console.log("7")}
-          else if(this.contains(ce.x+ce.seze, ce.y)) {return ce;console.log("8")}
+          //console.log("eeeee");
+          if(this.contains(ce.x, ce.y)){return ce;}//console.log("5")}
+          else if(this.contains(ce.x+ce.seze, ce.y+ce.seze)){ return ce;}//console.log("6")}
+          else if(this.contains(ce.x, ce.y+ce.seze)) {return ce;}//console.log("7")}
+          else if(this.contains(ce.x+ce.seze, ce.y)) {return ce;}//console.log("8")}
         }}
         let doesNotCollide = "false";
         return doesNotCollide;
@@ -388,8 +390,8 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
             // Remove the element from the original array and add it to the new array
             newArray.push(originalArray.splice(indexToRemove, 1)[0]);
 
-            console.log("Original Array:", originalArray);
-            console.log("New Array:", newArray);
+            //console.log("Original Array:", originalArray);
+            //console.log("New Array:", newArray);
         } else {
             console.log("Element not found in the original array");
         }
@@ -414,6 +416,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
       //ENTITY
     var player;
     const sightRange = 250, sightRangeSquared = sightRange*sightRange, attackRange = 30, attackRangeSquared = attackRange*attackRange, initialSeze = 40, dropSize = 20;
+    const defaultInvulFrCount = 22, invOpacity = "0.6";
     class Entity{
       constructor(h, s, sp, x, y, mp, ap){
         //attack
@@ -421,6 +424,7 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         this.hp = h;
         this.str = s;
         this.seze = initialSeze;
+        this.invulnerabilityFrames = 0;
         //position
         this.speed = sp;
         this.inGame = false;
@@ -453,6 +457,23 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
         let s = this.movePath.getSpeedModifier();
         //movement
         this.moveAt(this.moveAngle, this.speed * s);
+        //attacks
+        let px = player.x - this.x; let py = player.y - this.y;
+        let d = (px*px)+(py*py);
+        if(d<=attackRangeSquared){
+          //console.log("player within attack range");
+          this.attackPlayer();
+        }
+        //invulnerability
+        if(this.invulnerabilityFrames!=0){
+          //console.log("player is invul for this many frames "+this.invulnerabilityFrames);
+          this.invulnerabilityFrames--;
+          if(this.invulnerabilityFrames%3==0){
+            this.disp.style.opacity = this.disp.style.opacity === invOpacity ? "1.0" : invOpacity;
+          }
+          //this.disp.style.backdropFilter = "invert()";
+        }
+        else if(this.invulnerabilityFrames<0) this.invulnerabilityFrames = 0;
       }
       findRoomAtDirection(){
         let dir = (currentRoom.exitX!==roomSize/2) ? ((currentRoom.exitX===0)? "left" : "right") : ((currentRoom.exitY===0)? "down" : "up" );
@@ -461,25 +482,25 @@ Angle:<span id="angle"></span><span id="e4"></span>Sit amet consectetur adipisci
           case "left":
             r = Room.getRoom(currentRoom.x-1, currentRoom.y);
             if(r===-1)break;
-            console.log("going left");
+            //console.log("going left");
             this.x = roomSize-this.seze-1; this.y = roomSize/2;
             break;
           case "right":
             r = Room.getRoom(currentRoom.x+1, currentRoom.y);
             if(r===-1)break;
-            console.log("going right");
+            //console.log("going right");
             this.x = 1; this.y = roomSize/2;
             break;
           case "down":
             r = Room.getRoom(currentRoom.x, currentRoom.y-1);
             if(r===-1)break;
-            console.log("going down: "+currentRoom.x+","+currentRoom.y);
+            //console.log("going down: "+currentRoom.x+","+currentRoom.y);
             this.x = roomSize/2; this.y = roomSize-this.seze-1;
             break;
           case "up":
             r = Room.getRoom(currentRoom.x, currentRoom.y+1);
             if(r===-1)break;
-console.log("going up");
+//console.log("going up");
             this.x = roomSize/2; this.y = 1;
             break;
         }
@@ -510,15 +531,19 @@ console.log("going up");
         this.disp = en;
       }
       attackPlayer(){
-        
+        player.attack(1);
       }
       attack(damage){
-        this.hp-=damage;
-        if(this.hp<0){
-          this.hp = 0;
-          this.performDeath();
+        if(this.invulnerabilityFrames==0){
+          //console.log(this.name + " is invul for this many frames "+this.invulnerabilityFrames);
+          this.invulnerabilityFrames = defaultInvulFrCount;
+          this.hp-=damage;
+          if(this.hp<0){
+            this.hp = 0;
+            this.performDeath();
+          }
+          if(this.hp>this.maxHP) this.hp = this.maxHP;
         }
-        if(this.hp>this.maxHP) this.hp = this.maxHP;
       }
       performDeath(){
         //currentRoom.entityTransfersTo(new Room("dead", 100,100,0,0), this);
@@ -567,6 +592,16 @@ console.log("going up");
         this.move();
         //weapons
         this.updateEquippedWeapons();
+        //invulnerability
+        if(this.invulnerabilityFrames!=0){
+          //console.log("player is invul for this many frames "+this.invulnerabilityFrames);
+          this.invulnerabilityFrames--;
+          if(this.invulnerabilityFrames%3==0){
+            this.disp.style.opacity = this.disp.style.opacity === invOpacity ? "1.0" : invOpacity;
+          }
+          //this.disp.style.backdropFilter = "invert()";
+        }
+        else if(this.invulnerabilityFrames<0) this.invulnerabilityFrames = 0;
       }
       transferRoomsTo(xAdd, yAdd){
         let r = Room.getRoom(currentRoom.x+xAdd, currentRoom.y+yAdd);
@@ -1026,7 +1061,7 @@ console.log("going up");
         this.weapon = null;
       }
       unequippedWeaponFunction(){
-        //console.log("button has no equipped weapon");
+        console.log("button has no equipped weapon");
       }
       executeWeaponFunction(){
         if(this.rotationValue>=this.weapon.useIncrement){
@@ -1221,19 +1256,27 @@ console.log("going up");
       }
         //display functions
       displayStats(){
-        let uno = "Ek ", dos = "Wi ", tre = "Spe ", qua = "Ang ";
+        let uno = "Ek ", dos = "Wi ", tre = "Spe ", qua = "Ang ", cin = "Sprohgin ";
         let x = document.getElementById('x_coordinate');
         let y = document.getElementById('y_coordinate');
         let s = document.getElementById('speed');
         let a = document.getElementById('angle');
+        let h = document.getElementById('healthpoints');
         x.innerText = Math.floor(this.posX);
         y.innerText = Math.floor(this.posY);
         s.innerText = this.spd;
         a.innerText = Math.floor(this.angl*100)/100;
+        try{
+          h.innerText = player.hp + "/" + player.maxHP; 
+        }
+        catch(Exception){
+          h.innerText = "0/0";
+        }
         document.getElementById('e1').innerText=" "+uno.substring(x.innerText.length,4);
         document.getElementById('e2').innerText=" "+dos.substring(y.innerText.length,4);
         document.getElementById('e3').innerText=" "+tre.substring(s.innerText.length,5);
         document.getElementById('e4').innerText=" "+qua.substring(a.innerText.length,5);
+        document.getElementById('e5').innerText=" "+cin.substring(h.innerText.length,10);
       }
       resetStats(){
         this.posX=0; this.posY=0; this.spd=0;
