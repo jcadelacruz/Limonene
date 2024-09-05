@@ -114,12 +114,12 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
       roomList = [rn11 , r01 , r11, rn10 , r00 , r10, rn1n1, r0n1, r1n1];
       //entities
         //entity behaviors
-      var chase_LToR = new ChaseWhenWithinRange(
+      var chase_LToR = new DashWhenWithinRange(
         [
           {x:0,y:roomSize-200,speed:1},
           {x:0,y:0,speed:0,pausedFrames:10},
           {x:roomSize-initialSeze,y:roomSize-200,speed:1}
-        ], sightRange);
+        ], sightRange, 40, 20, 300);
         //entity declarations
       var e01_01 = new Entity(100, 10, 2, 0,2*roomSize/5, chase_LToR, null);
       //var e01_02 = new Entity(100, 10, 2, 20,2*roomSize/5);
@@ -683,7 +683,6 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
       }
       update(x,y){
         if(this.vertexPoints[this.currentVertex].pausedFrames!=null){
-          console.log("paused frames: "+this.pausedFrames);
           if(this.pausedFrames<this.vertexPoints[this.currentVertex].pausedFrames){
             this.pausedFrames++;
           }
@@ -715,36 +714,95 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
         return this.vertexPoints[this.currentVertex].speed;
       }
     }
-    class ChaseWhenWithinRange extends MovePath{
+    class EffectWhenPlayerWithinRange extends MovePath{//abstract super class
       constructor(p, r){
         super(p);
         this.range = r;//sight range (chasing range)
         this.rangeSquared = r*r;
-        this.chasingPlayer = false;
+        this.playerWithinRange = false;
+        this.executingEffect = false;
       }
       getAngle(x,y){
         let moveAngle = 0;
-        
-        let px = player.x - x; let py = player.y - y;
-        let d = (px*px)+(py*py);
-        if(d<=this.rangeSquared){//checking if entity is near the player
-          this.chasingPlayer = true;
-          let m = Math.atan(py/px);
-          moveAngle = (px<0) ? ((py<0)?m+Math.PI:Math.PI+m) : ((py<0)?(2*Math.PI)+m:m);
+        if(!this.executingEffect){//if not executing effect, check if player is nearby
+          let px = player.x - x; let py = player.y - y;
+          let d = (px*px)+(py*py);
+          if(d<=this.rangeSquared){//case, near player: execute effect
+            this.playerWithinRange = true;
+            moveAngle = this.executeEffect(px,py);
+            return moveAngle;
+          }
+          else{this.playerWithinRange = false;}
         }
-        else{//case; not near player
-          this.chasingPlayer = false;
-          let dx = this.vertexPoints[this.currentVertex].x - x;
-          let dy = this.vertexPoints[this.currentVertex].y - y;
-          moveAngle = Math.atan2(dy, dx);
+        else{
+          if(this.isEffectComplete()) this.executingEffect = false;
         }
+        //case, not near player: just give the angle to the vertexPoint
+        let dx = this.vertexPoints[this.currentVertex].x - x;
+        let dy = this.vertexPoints[this.currentVertex].y - y;
+        moveAngle = Math.atan2(dy, dx);
         
         return moveAngle;
       }
+      executeEffect(px,py){return 0;}
+      isEffectComplete(){return true;}
     }
-    class AttackPath extends MovePath{
-      
+    class ChaseWhenWithinRange extends EffectWhenPlayerWithinRange{
+      constructor(p,r){super(p,r);}
+      executeEffect(px,py){
+        return Math.atan2(py, px);
+      }
     }
+    class DashWhenWithinRange extends EffectWhenPlayerWithinRange{
+      constructor(p,r,dd,pd,cd){
+        super(p,r);
+        this.dashDuration = dd;
+        this.pauseDuration = pd;
+        this.cooldownDuration = cd;//length of time AFTER dash has been LANDED
+        this.pausedVertexIndex = 0;
+        this.counter = 0;
+      }
+      executeEffect(px,py){
+        this.executingEffect = true;
+        //add dash effect to vertexPoints
+        this.pausedVertexIndex = this.currentVertex;
+        let pausedV = {x:0,y:0,speed:0,pausedFrames:this.pauseDuration};
+        let dashingV = {x:player.x+px,y:player.y+py,speed:6};
+        this.vertexPoints.splice(this.currentVertex,0,pausedV,dashingV);
+        //add removal vertex
+        return Math.atan2(py, px);
+      }
+      isEffectComplete(){
+        if(this.currentVertex!=this.pausedVertexIndex+2){
+          if(this.currentVertex==this.pausedVertexIndex+1){//if dash is commencing
+            if(this.counter<this.dashDuration){
+              this.counter++;
+            }
+            else{
+              this.counter = 0;
+              this.moveToNextVertex();
+            }
+          }
+        }
+        else{//remove paused and dashing vertices after dash is complete
+          this.vertexPoints.splice(this.pausedVertexIndex,2);
+          this.currentVertex -= 2;
+          if(this.currentVertex<0) this.currentVertex += this.vertexPoints;
+          this.pausedVertexIndex = -50;
+        }
+        if(this.pausedVertexIndex==-50){//check if dash is done
+          if(this.counter<this.cooldownDuration){//check if cooldown is over
+            this.counter++;
+          }
+          else{
+            this.counter = 0;
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+    class AttackPath extends MovePath{}
     
   }
     
