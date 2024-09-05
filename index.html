@@ -478,6 +478,8 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
           //this.disp.style.backdropFilter = "invert()";
         }
         else if(this.invulnerabilityFrames<0) this.invulnerabilityFrames = 0;
+        //movepath display effects]
+        this.executeMovePathDisplayEffects();
       }
       findRoomAtDirection(){
         let dir = (currentRoom.exitX!==roomSize/2) ? ((currentRoom.exitX===0)? "left" : "right") : ((currentRoom.exitY===0)? "down" : "up" );
@@ -548,6 +550,16 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
           }
           if(this.hp>this.maxHP) this.hp = this.maxHP;
         }
+      }
+      executeMovePathDisplayEffects(){
+        let v = this.movePath.vertexPoints[this.movePath.currentVertex];
+        if(v.pausedFrames != 0){
+          this.disp.style.opacity = ""+((this.movePath.pausedFrames/(v.pausedFrames*2))+0.5);
+        }
+        /*if(v.type!=null){
+          switch(v.type){
+            case pauseBEFOREdash:
+        }*/
       }
       performDeath(){
         //currentRoom.entityTransfersTo(new Room("dead", 100,100,0,0), this);
@@ -696,7 +708,7 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
         let v = this.vertexPoints[this.currentVertex];
         let px = x - v.x; let py = y - v.y;
         let d = (px*px)+(py*py);
-        if(d <= attackRangeSquared){//if current vertex is close enough to player
+        if(d <= attackRangeSquared){//if current vertex is close enough to entity
           this.moveToNextVertex();
         }
       }
