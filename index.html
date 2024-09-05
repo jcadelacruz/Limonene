@@ -45,6 +45,9 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
       position: absolute;
       top: 0; left: 0;
     }
+    /*div{
+      transition: all 0.08s linear 0s;
+    }*/
     .UI, #UI>*{
       z-index: 100;
       position: fixed;
@@ -114,6 +117,7 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
       var chase_LToR = new ChaseWhenWithinRange(
         [
           {x:0,y:roomSize-200,speed:1},
+          {x:0,y:0,speed:0,pausedFrames:10},
           {x:roomSize-initialSeze,y:roomSize-200,speed:1}
         ], sightRange);
         //entity declarations
@@ -675,8 +679,21 @@ HP:<span id="healthpoints"></span><span id="e5"></span>Accumsan nisi maximus rid
       constructor(p){
         this.vertexPoints = p;
         this.currentVertex = 0;
+        this.pausedFrames = 0;
       }
       update(x,y){
+        if(this.vertexPoints[this.currentVertex].pausedFrames!=null){
+          console.log("paused frames: "+this.pausedFrames);
+          if(this.pausedFrames<this.vertexPoints[this.currentVertex].pausedFrames){
+            this.pausedFrames++;
+          }
+          else{
+            this.pausedFrames = 0;
+            this.moveToNextVertex();
+          }
+          return;
+        }
+        
         let v = this.vertexPoints[this.currentVertex];
         let px = x - v.x; let py = y - v.y;
         let d = (px*px)+(py*py);
